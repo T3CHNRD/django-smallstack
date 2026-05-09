@@ -131,7 +131,7 @@ class TeamScopedMixin:
 ## Settings
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 TEAMS_ENABLED = True                    # Toggle the teams feature
 TEAMS_DEFAULT_ORG_NAME = "My Company"   # Name for the auto-created org
 TEAMS_REQUIRE_MEMBERSHIP = False        # If True, users must belong to a team

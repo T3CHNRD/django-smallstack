@@ -52,7 +52,7 @@ Save. The dev server auto-reloads — refresh the browser.
 
 **Step 4 — Update branding**
 
-In `config/settings/base.py`:
+In `config/settings/smallstack.py`:
 
 ```python
 BRAND_NAME = "My App"

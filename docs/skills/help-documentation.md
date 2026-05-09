@@ -369,7 +369,7 @@ The SmallStack docs use category grouping with 12 categories: Getting Started, D
 ### Controlling Bundled Docs
 
 ```python
-# config/settings/base.py (or .env)
+# config/settings/smallstack.py (or .env)
 SMALLSTACK_DOCS_ENABLED = True   # Show bundled docs (default)
 SMALLSTACK_DOCS_ENABLED = False  # Hide bundled docs
 ```

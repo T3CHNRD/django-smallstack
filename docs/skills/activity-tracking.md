@@ -48,7 +48,7 @@ Indexes on: `timestamp`, `path`, `status_code`.
 
 ## Configuration
 
-All settings are in `config/settings/base.py` and can be overridden via environment variables:
+All settings are in `config/settings/smallstack.py` and can be overridden via environment variables:
 
 ```python
 # Maximum rows to keep in the RequestLog table

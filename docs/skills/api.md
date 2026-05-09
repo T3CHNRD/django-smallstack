@@ -128,7 +128,7 @@ Two scenarios are handled:
 
 This ensures API consumers always receive JSON responses, never HTML lockout pages.
 
-Lockout is configured in `config/settings/base.py`:
+Lockout is configured in `config/settings/smallstack.py`:
 
 | Setting | Default | Description |
 |---------|---------|-------------|

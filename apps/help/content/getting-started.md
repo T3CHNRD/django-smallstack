@@ -8,7 +8,7 @@ After you've cloned the repo and run `make setup`, you'll have a working site at
 
 ### 1. Update Your Branding
 
-Open `config/settings/base.py` and change the brand name:
+Open `config/settings/smallstack.py` and change the brand name:
 
 ```python
 BRAND_NAME = "My App"

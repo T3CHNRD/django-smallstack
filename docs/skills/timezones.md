@@ -10,7 +10,7 @@ SmallStack uses a three-layer timezone architecture: UTC in the database, a serv
 
 ```
 config/settings/
-├── base.py                    # TIME_ZONE setting (default: America/New_York)
+├── smallstack.py              # TIME_ZONE setting (default: America/New_York)
 
 apps/smallstack/
 ├── middleware.py               # TimezoneMiddleware — activates TZ per request
@@ -269,7 +269,7 @@ Backup filenames (`db-YYYYMMDD-HHMMSS.sqlite3`) also use UTC timestamps for cons
 
 | Setting | Default | Location | Purpose |
 |---------|---------|----------|---------|
-| `TIME_ZONE` | `America/New_York` | `base.py` | Server default timezone for display |
+| `TIME_ZONE` | `America/New_York` | `smallstack.py` | Server default timezone for display |
 | `USE_TZ` | `True` | `base.py` | Store datetimes as UTC (don't change) |
 
 Override via `.env`:

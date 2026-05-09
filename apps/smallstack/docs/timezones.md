@@ -21,16 +21,16 @@ DB (UTC) → Middleware activates TZ → Django |date filter renders in active T
 
 ### 1. Storage — Always UTC
 
-Django's `USE_TZ = True` (set in `base.py`) means every datetime stored in the database is in UTC. This is the industry standard — it avoids ambiguity around daylight saving transitions and makes timezone conversion straightforward.
+Django's `USE_TZ = True` (set in `smallstack.py`) means every datetime stored in the database is in UTC. This is the industry standard — it avoids ambiguity around daylight saving transitions and makes timezone conversion straightforward.
 
 You never need to think about this layer. Django handles it automatically.
 
 ### 2. Server Timezone — The Default Display
 
-The `TIME_ZONE` setting in `base.py` controls the default timezone for all date rendering:
+The `TIME_ZONE` setting in `smallstack.py` controls the default timezone for all date rendering:
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 TIME_ZONE = config("TIME_ZONE", default="America/New_York")
 ```
 

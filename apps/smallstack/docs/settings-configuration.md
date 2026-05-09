@@ -13,18 +13,19 @@ description: Understanding the split settings architecture and environment varia
 config/
 ├── settings/
 │   ├── __init__.py      # Empty, makes it a package
-│   ├── base.py          # Shared settings for all environments
+│   ├── base.py          # Shared Django infrastructure settings
+│   ├── smallstack.py    # SmallStack-specific settings (BRAND_*, SMALLSTACK_*, etc.)
 │   ├── development.py   # Local development overrides
 │   └── production.py    # Production-specific settings
 ├── urls.py
 └── wsgi.py
 ```
 
-## The Three Settings Files
+## The Settings Files
 
-### base.py - Shared Configuration
+### base.py - Django Infrastructure
 
-Contains settings used in **all environments**:
+Contains core Django settings used in **all environments**:
 
 - `INSTALLED_APPS` - Your Django apps
 - `MIDDLEWARE` - Request/response processing
@@ -33,12 +34,35 @@ Contains settings used in **all environments**:
 - `LOGIN_URL`, `LOGIN_REDIRECT_URL` - Authentication URLs
 - `STATIC_URL`, `MEDIA_URL` - Static/media file URLs
 
+`base.py` imports everything from `smallstack.py` via `from config.settings.smallstack import *`, so all SmallStack settings are available transitively.
+
 **When to add settings here:**
 - Settings that don't change between environments
 - App registrations
 - Middleware ordering
 - Template configuration
 - URL settings
+
+### smallstack.py - SmallStack-Specific Settings
+
+Contains all SmallStack feature settings:
+
+- `BRAND_*` - Branding (name, logos, favicon, social image)
+- `SMALLSTACK_*` - Feature flags (docs, login, signup, sidebar, topbar nav, color palette)
+- `SITE_*` - Site metadata (name, domain)
+- `BACKUP_*` - Backup configuration (directory, retention, cron, downloads)
+- `HEARTBEAT_*` - Uptime monitoring (retention, interval)
+- `ACTIVITY_*` - Activity tracking (max rows, excluded paths)
+- `AXES_*` - Login rate limiting
+- `DEFAULT_FROM_EMAIL` - Default email sender
+- `EMAIL_BACKEND` - Email backend
+- `TIME_ZONE` - Server timezone for display
+- `USE_HTTPS` - HTTPS enforcement
+
+**When to add settings here:**
+- SmallStack feature configuration
+- Branding and site identity
+- Feature flags and toggles
 
 ### development.py - Local Development
 
@@ -171,11 +195,12 @@ This means:
 | Setting Type | File | Example |
 |--------------|------|---------|
 | App registration | `base.py` | `INSTALLED_APPS` |
-| Shared behavior | `base.py` | `AUTH_USER_MODEL` |
+| Django infrastructure | `base.py` | `AUTH_USER_MODEL`, `MIDDLEWARE` |
+| SmallStack features | `smallstack.py` | `BRAND_NAME`, `SMALLSTACK_*`, `BACKUP_*` |
 | Debug features | `development.py` | `DEBUG_TOOLBAR_CONFIG` |
 | Security settings | `production.py` | `SECURE_SSL_REDIRECT` |
 | Secrets | `.env` + `production.py` | `SECRET_KEY`, API keys |
-| Environment-specific | Both dev & prod | `DATABASES`, `EMAIL_BACKEND` |
+| Environment-specific | Both dev & prod | `DATABASES` |
 
 ### Step 2: Add the Setting
 
@@ -237,7 +262,7 @@ SmallStack includes these feature flags out of the box:
 | `SMALLSTACK_COLOR_PALETTE` | `"django"` | System default color palette (`django`, `light-blue`, `dark-blue`, `orange`, `purple`) |
 | `TIME_ZONE` | `America/New_York` | Server timezone for date display (any IANA timezone name) |
 
-`SMALLSTACK_TOPBAR_NAV_ITEMS` is a Python list (not an env var) — configure it directly in your settings file. See [Topbar Navigation](/help/smallstack/topbar-navigation/) for the item format and examples.
+All of these are defined in `config/settings/smallstack.py`. `SMALLSTACK_TOPBAR_NAV_ITEMS` is a Python list (not an env var) — configure it directly in your settings file. See [Topbar Navigation](/help/smallstack/topbar-navigation/) for the item format and examples.
 
 See [Authentication](/help/smallstack/authentication/) for details on the auth flags. See [Working with Timezones](/help/smallstack/timezones/) for the full timezone architecture.
 
@@ -482,7 +507,8 @@ python manage.py runserver
 
 | File | Purpose | Secrets? |
 |------|---------|----------|
-| `base.py` | Shared settings | No |
+| `base.py` | Django infrastructure settings | No |
+| `smallstack.py` | SmallStack feature settings (BRAND_*, SMALLSTACK_*, etc.) | No |
 | `development.py` | Local dev overrides | No |
 | `production.py` | Production settings | Read from env |
 | `.env` | Local secrets | Yes (don't commit) |
@@ -490,7 +516,8 @@ python manage.py runserver
 
 **Key principles:**
 1. Secrets go in environment variables, never in code
-2. Use `base.py` for shared settings
-3. Use environment-specific files for overrides
-4. Always provide `.env.example` for documentation
-5. Validate required settings in production
+2. Use `base.py` for Django infrastructure settings
+3. Use `smallstack.py` for SmallStack feature settings (branding, flags, monitoring, etc.)
+4. Use environment-specific files for overrides
+5. Always provide `.env.example` for documentation
+6. Validate required settings in production

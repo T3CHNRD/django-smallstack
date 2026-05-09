@@ -62,7 +62,7 @@ SMALLSTACK_SIGNUP_ENABLED=False
 Or in settings:
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 SMALLSTACK_SIGNUP_ENABLED = False
 ```
 
@@ -137,7 +137,7 @@ urlpatterns = [
 
 The flags follow the same pattern as `SMALLSTACK_DOCS_ENABLED`:
 
-1. **Setting** defined in `config/settings/base.py` with `python-decouple` (reads from `.env` or environment)
+1. **Setting** defined in `config/settings/smallstack.py` with `python-decouple` (reads from `.env` or environment)
 2. **Context processor** in `apps/smallstack/context_processors.py` exposes the flag to all templates
 3. **Templates** use `{% if smallstack_signup_enabled %}` to conditionally render UI elements
 4. **View** checks the flag in `dispatch()` and raises `Http404` when disabled (signup only)

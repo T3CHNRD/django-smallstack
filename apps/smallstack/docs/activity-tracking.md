@@ -129,14 +129,14 @@ python manage.py prune_activity
 
 ## Configuration
 
-All settings live in `config/settings/base.py` and can be overridden via environment variables or per-environment settings files.
+All settings live in `config/settings/smallstack.py` and can be overridden via environment variables or per-environment settings files.
 
 ### Row Limit
 
 Control how many request log rows to keep:
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 ACTIVITY_MAX_ROWS = 10000  # env: ACTIVITY_MAX_ROWS
 ```
 
@@ -152,7 +152,7 @@ For most small sites, 10,000 rows covers several days to weeks of traffic. If yo
 Add your own paths to the exclusion list to keep them out of the dashboard:
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 ACTIVITY_EXCLUDE_PATHS = [
     "/static/", "/media/", "/favicon.ico",
     "/health/", "/admin/jsi18n/", "/__debug__/",

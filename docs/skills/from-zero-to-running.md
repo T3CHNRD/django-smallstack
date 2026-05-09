@@ -121,7 +121,7 @@ Log in with `admin` / `admin` (or whatever you set in `.env`). Visit:
 
 ### 2.1 Update Branding Settings
 
-Edit `config/settings/base.py`:
+Edit `config/settings/smallstack.py`:
 
 ```python
 # Branding — update all of these
@@ -161,7 +161,7 @@ static/brand/
 
 ### 2.3 Choose Default Color Palette
 
-In `config/settings/base.py`:
+In `config/settings/smallstack.py`:
 
 ```python
 SMALLSTACK_COLOR_PALETTE = "django"  # Options: django, high-contrast, dark-blue, orange, purple

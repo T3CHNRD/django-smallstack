@@ -10,11 +10,14 @@ SmallStack uses a split settings pattern with separate files for base, developme
 
 ```
 config/settings/
-├── base.py           # Shared settings (all environments)
+├── base.py           # Django infrastructure (INSTALLED_APPS, MIDDLEWARE, DATABASES, etc.)
+├── smallstack.py     # SmallStack-specific settings (BRAND_*, SMALLSTACK_*, SITE_*, ACTIVITY_*, etc.)
 ├── development.py    # DEBUG=True, debug toolbar
 ├── production.py     # Security headers, production database
 └── test.py           # Pytest-specific settings
 ```
+
+`base.py` imports everything from `smallstack.py` via `from config.settings.smallstack import *`, so all settings are available transitively.
 
 ## Settings Selection
 
@@ -28,9 +31,9 @@ The active settings module is controlled by `DJANGO_SETTINGS_MODULE`:
 
 Set via environment variable or in `manage.py` / `wsgi.py`.
 
-## Key Settings in base.py
+## Key Settings
 
-### Installed Apps
+### Installed Apps (base.py)
 
 ```python
 INSTALLED_APPS = [
@@ -57,7 +60,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-### Branding
+### Branding (smallstack.py)
 
 All branding is configurable via environment variables:
 
@@ -74,7 +77,7 @@ BRAND_TAGLINE = config("BRAND_TAGLINE", default="A minimal Django starter stack"
 
 Brand paths are relative to `STATIC_URL`. Override with your own assets in `static/brand/`.
 
-### Site Configuration
+### Site Configuration (smallstack.py)
 
 ```python
 SITE_NAME = config("SITE_NAME", default="SmallStack")
@@ -82,7 +85,7 @@ SITE_DOMAIN = config("SITE_DOMAIN", default="localhost:8000")
 USE_HTTPS = config("USE_HTTPS", default=False, cast=bool)
 ```
 
-### SmallStack Feature Flags
+### SmallStack Feature Flags (smallstack.py)
 
 ```python
 # Color palette system default (users can override in profile)
@@ -112,7 +115,7 @@ SMALLSTACK_SIDEBAR_DEFAULT = config("SMALLSTACK_SIDEBAR_DEFAULT", default="open"
 SMALLSTACK_TOPBAR_NAV_ALWAYS = config("SMALLSTACK_TOPBAR_NAV_ALWAYS", default=True, cast=bool)
 ```
 
-### REST API Settings
+### REST API Settings (smallstack.py)
 
 ```python
 SMALLSTACK_API_PREFIX = config("SMALLSTACK_API_PREFIX", default="api/")
@@ -121,7 +124,7 @@ SMALLSTACK_LOGIN_TOKEN_EXPIRY_HOURS = config("SMALLSTACK_LOGIN_TOKEN_EXPIRY_HOUR
 SMALLSTACK_LOGIN_TOKEN_MAX_HOURS = config("SMALLSTACK_LOGIN_TOKEN_MAX_HOURS", default=168, cast=int)
 ```
 
-### SQLite Performance Tuning
+### SQLite Performance Tuning (base.py)
 
 ```python
 SQLITE_OPTIONS = {
@@ -140,7 +143,7 @@ SQLITE_OPTIONS = {
 
 Referenced by both `development.py` and `production.py` as `"OPTIONS": SQLITE_OPTIONS`. Prevents "database is locked" errors by enabling WAL mode and IMMEDIATE transactions. Do not use `ATOMIC_REQUESTS = True` with this configuration.
 
-### Activity Tracking
+### Activity Tracking (smallstack.py)
 
 ```python
 ACTIVITY_MAX_ROWS = config("ACTIVITY_MAX_ROWS", default=10000, cast=int)
@@ -148,7 +151,7 @@ ACTIVITY_PRUNE_INTERVAL = config("ACTIVITY_PRUNE_INTERVAL", default=100, cast=in
 ACTIVITY_EXCLUDE_PATHS = ["/static/", "/media/", "/favicon.ico", "/health/", "/admin/jsi18n/", "/__debug__/"]
 ```
 
-### Background Tasks
+### Background Tasks (base.py)
 
 ```python
 TASKS = {
@@ -159,7 +162,7 @@ TASKS = {
 }
 ```
 
-### Email
+### Email (smallstack.py)
 
 ```python
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@example.com")
@@ -168,7 +171,7 @@ EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.conso
 
 For production SMTP, set `EMAIL_BACKEND=django.core.mail.backends.smtp.SmtpBackend` and configure `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`.
 
-### Static Files
+### Static Files (base.py)
 
 WhiteNoise serves static files in production with compression and caching:
 
@@ -193,7 +196,7 @@ ACTIVITY_MAX_ROWS = config("ACTIVITY_MAX_ROWS", default=10000, cast=int)
 
 ### Adding New Settings
 
-1. Add to `config/settings/base.py` using the `config()` pattern
+1. Add SmallStack-specific settings (BRAND_*, SMALLSTACK_*, SITE_*, ACTIVITY_*, BACKUP_*, HEARTBEAT_*, AXES_*) to `config/settings/smallstack.py` using the `config()` pattern. Add Django infrastructure settings to `config/settings/base.py`.
 2. Document the default value
 3. Add to `.env.example` if one exists
 
@@ -214,6 +217,6 @@ ACTIVITY_MAX_ROWS = config("ACTIVITY_MAX_ROWS", default=10000, cast=int)
 ## Best Practices
 
 1. **Use `config()` for all secrets** — Never hardcode secrets in settings files
-2. **Keep base.py generic** — Environment-specific overrides go in development.py/production.py
+2. **Keep base.py for Django infrastructure** — SmallStack-specific settings go in smallstack.py, environment-specific overrides go in development.py/production.py
 3. **Custom apps before Django** — Ensures template overrides work correctly
 4. **Use feature flags** — `SMALLSTACK_*` settings let you toggle features without code changes

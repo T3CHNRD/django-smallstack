@@ -25,7 +25,7 @@ The {{ project_name }} theme is built on Django admin's CSS foundation with cust
 The topbar displays your text logo at **32px height**. Replace with your own:
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 BRAND_NAME = "My Project"
 BRAND_LOGO_TEXT = "brand/my-logo-text.svg"  # Topbar (32px height)
 ```
@@ -119,7 +119,7 @@ SmallStack includes 5 selectable color palettes that change the primary accent c
 Set the default palette for all users via settings or `.env`:
 
 ```python
-# config/settings/base.py (or in .env)
+# config/settings/smallstack.py (or in .env)
 SMALLSTACK_COLOR_PALETTE = "purple"
 ```
 

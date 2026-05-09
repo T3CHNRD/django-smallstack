@@ -147,7 +147,7 @@ The effective palette is resolved differently on the server and client, but they
 **Server-side** — `_get_effective_palette()` in `context_processors.py`:
 
 1. User profile `color_palette` (if set)
-2. `SMALLSTACK_COLOR_PALETTE` setting (from `base.py` / `.env`)
+2. `SMALLSTACK_COLOR_PALETTE` setting (from `smallstack.py` / `.env`)
 3. `"django"` (hardcoded fallback)
 
 **Client-side** — `getPreferredPalette()` in `theme.js`:
@@ -191,7 +191,7 @@ html[data-palette="purple"][data-theme="dark"] {
 ### Setting the System Default
 
 ```python
-# config/settings/base.py (or in .env)
+# config/settings/smallstack.py (or in .env)
 SMALLSTACK_COLOR_PALETTE = "purple"  # Options: django, high-contrast, dark-blue, orange, purple
 ```
 

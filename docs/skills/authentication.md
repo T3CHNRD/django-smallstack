@@ -121,11 +121,11 @@ Downstream projects can remove these aliases or replace them with direct views.
 
 ```python
 # config/settings/base.py
-
 LOGIN_URL = "/smallstack/accounts/login/"
 LOGIN_REDIRECT_URL = "/smallstack/"
 LOGOUT_REDIRECT_URL = "/"
 
+# config/settings/smallstack.py
 # Auth feature flags (default True, configurable via .env)
 SMALLSTACK_LOGIN_ENABLED = config("SMALLSTACK_LOGIN_ENABLED", default=True, cast=bool)
 SMALLSTACK_SIGNUP_ENABLED = config("SMALLSTACK_SIGNUP_ENABLED", default=True, cast=bool)

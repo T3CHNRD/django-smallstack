@@ -147,7 +147,7 @@ This separation means your docs never conflict with upstream updates.
 SmallStack reference docs are shown by default. To hide them:
 
 ```python
-# config/settings/base.py (or in .env)
+# config/settings/smallstack.py (or in .env)
 SMALLSTACK_DOCS_ENABLED = False
 ```
 
@@ -240,10 +240,10 @@ SmallStack uses a settings-based branding system that makes customization easy. 
 
 ### Quick Branding (Settings-Based)
 
-The easiest way to rebrand is via settings. Add these to `config/settings/base.py` or your `.env` file:
+The easiest way to rebrand is via settings. Add these to `config/settings/smallstack.py` or your `.env` file:
 
 ```python
-# config/settings/base.py (or in .env)
+# config/settings/smallstack.py (or in .env)
 BRAND_NAME = "My Project"           # Site name in header, footer, titles
 BRAND_TAGLINE = "Your tagline"      # Social preview description
 BRAND_LOGO_TEXT = "brand/my-logo.svg"  # Text logo for topbar (relative to static/)
@@ -361,7 +361,7 @@ Branding is available in all templates via the `brand` context variable:
 SmallStack reference docs are bundled separately and controlled by a setting:
 
 ```python
-# config/settings/base.py (or in .env)
+# config/settings/smallstack.py (or in .env)
 SMALLSTACK_DOCS_ENABLED = False  # Hide SmallStack docs
 ```
 
@@ -376,7 +376,7 @@ Auth pages (`login.html`, `signup.html`, etc.) use the `brand.name` variable aut
 SmallStack includes 5 built-in color palettes that change the primary accent colors site-wide. Set the system default via settings:
 
 ```python
-# config/settings/base.py (or in .env)
+# config/settings/smallstack.py (or in .env)
 SMALLSTACK_COLOR_PALETTE = "purple"  # Options: django, light-blue, dark-blue, orange, purple
 ```
 
@@ -389,7 +389,7 @@ For full details on adding custom palettes, see [Theming & Customization](/help/
 For marketing sites or layouts without a sidebar, add horizontal navigation links to the topbar:
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 SMALLSTACK_TOPBAR_NAV_ENABLED = True  # or set via .env
 SMALLSTACK_TOPBAR_NAV_ITEMS = [
     {"label": "Features", "url": "website:features"},

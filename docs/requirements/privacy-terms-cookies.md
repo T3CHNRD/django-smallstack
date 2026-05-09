@@ -23,7 +23,7 @@ SmallStack should ship these so downstream projects don't reinvent them.
 
 **Settings:**
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 BRAND_PRIVACY_URL = "/privacy/"      # set to None to disable footer link
 BRAND_TERMS_URL = "/terms/"          # set to None to disable footer link
 ```
@@ -98,7 +98,7 @@ apps/help/content/legal/
 templates/smallstack/includes/
 └── cookie_banner.html    # Cookie consent banner partial
 
-config/settings/base.py   # BRAND_PRIVACY_URL, BRAND_TERMS_URL settings
+config/settings/smallstack.py   # BRAND_PRIVACY_URL, BRAND_TERMS_URL settings
 ```
 
 ## Settings Summary

@@ -10,7 +10,8 @@ SmallStack ships with SQLite as a deliberate choice — not a compromise. For so
 
 ```
 config/settings/
-├── base.py                # Database configuration, BACKUP_* settings
+├── base.py                # Database configuration, SQLITE_OPTIONS
+├── smallstack.py          # BACKUP_* settings
 ├── development.py         # SQLite default
 └── production.py          # PostgreSQL option
 

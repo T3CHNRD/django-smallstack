@@ -35,7 +35,8 @@ templates/
     └── user_form.html         # Tabbed edit form (Account, Profile, Activity)
 
 config/settings/
-├── base.py                # AUTH_USER_MODEL, SMALLSTACK_SIGNUP_ENABLED
+├── base.py                # AUTH_USER_MODEL
+├── smallstack.py          # SMALLSTACK_SIGNUP_ENABLED, DEFAULT_FROM_EMAIL, EMAIL_BACKEND
 ├── development.py         # EMAIL_BACKEND = console
 └── production.py          # EMAIL_BACKEND = SMTP
 ```

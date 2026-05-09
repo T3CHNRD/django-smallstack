@@ -107,7 +107,7 @@ When heartbeat records are pruned (after the retention period), they are first a
 ## Settings
 
 ```python
-# config/settings/base.py
+# config/settings/smallstack.py
 HEARTBEAT_RETENTION_DAYS = 7       # How long to keep individual records (default: 7)
 HEARTBEAT_EXPECTED_INTERVAL = 60   # Seconds between checks (default: 60)
 ```

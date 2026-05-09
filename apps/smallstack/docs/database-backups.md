@@ -178,7 +178,7 @@ After changing, rebuild and redeploy your container.
 
 ## Configuration
 
-These settings are already defined in `config/settings/base.py` with sensible defaults. Override them via environment variables or your `.env` file:
+These settings are already defined in `config/settings/smallstack.py` with sensible defaults. Override them via environment variables or your `.env` file:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -283,7 +283,7 @@ If you're enabling backups in a project built from {{ project_name }}, verify th
 
 - [ ] `apps.smallstack` is in `INSTALLED_APPS` (`config/settings/base.py`)
 - [ ] `/backups/` URL is included in `config/urls.py`
-- [ ] `BACKUP_*` settings are defined in `config/settings/base.py`
+- [ ] `BACKUP_*` settings are defined in `config/settings/smallstack.py`
 - [ ] Migrations are up to date (`make migrate`)
 - [ ] `make backup` target exists in your `Makefile`
 - [ ] For Docker/Kamal: `BACKUP_CRON_ENABLED` is set in `docker-compose.yml` or `config/deploy.yml`

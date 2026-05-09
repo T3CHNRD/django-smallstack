@@ -51,7 +51,7 @@ apps/smallstack/docs/        # SmallStack docs (app-contributed)
 SmallStack reference docs are shown by default. To hide them:
 
 ```python
-# config/settings/base.py (or .env)
+# config/settings/smallstack.py (or .env)
 SMALLSTACK_DOCS_ENABLED = False
 ```
 
