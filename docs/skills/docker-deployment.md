@@ -4,7 +4,7 @@ This skill describes how to build and run SmallStack with Docker and Docker Comp
 
 ## Overview
 
-SmallStack includes a `Dockerfile` and `docker-compose.yml` for containerized deployment. The setup runs two services: a web server (Gunicorn) and a background worker (db_worker). SQLite is the default database, stored in a named volume for persistence.
+SmallStack includes a `Dockerfile` and `docker-compose.yml` for containerized deployment. By default, the web container runs both Gunicorn and the background worker (`db_worker`) inline — a single-container deployment. For high-traffic sites, you can split the worker into a separate container. SQLite is the default database, stored in a named volume for persistence.
 
 ## File Locations
 
@@ -57,11 +57,17 @@ web:
     interval: 30s
 ```
 
-### worker
+### Background Worker
 
-Background task processor using `django-tasks-db`:
+By default, the web container runs `db_worker` inline as a background process (controlled by `WORKER_INLINE`, which defaults to `true`). No separate worker service is needed.
+
+For high-traffic sites or heavy background workloads, you can split the worker into a separate container by setting `WORKER_INLINE=false` on the web service and uncommenting the `worker` service in `docker-compose.yml`:
 
 ```yaml
+# In web service environment:
+- WORKER_INLINE=false
+
+# Uncomment the worker service:
 worker:
   build: .
   command: python manage.py db_worker --queue-name "*"
@@ -72,7 +78,7 @@ worker:
       condition: service_healthy
 ```
 
-The worker shares the same `db_data` volume as the web service so both can access the SQLite database.
+The separate worker shares the same `db_data` volume as the web service so both can access the SQLite database.
 
 ## Dockerfile
 
@@ -81,8 +87,8 @@ The Dockerfile uses Python 3.12 slim with UV for dependency management:
 1. Installs system dependencies (curl for health checks)
 2. Installs UV and Python dependencies from `pyproject.toml`/`uv.lock`
 3. Copies application code
-4. Runs `docker-entrypoint.sh` which auto-generates SECRET_KEY (if not set), runs migrations, collectstatic, and optional superuser creation
-5. Starts Gunicorn on port 80
+4. Runs `docker-entrypoint.sh` which auto-generates SECRET_KEY (if not set), runs migrations, collectstatic, optional superuser creation, and starts the inline `db_worker` (unless `WORKER_INLINE=false`)
+5. Starts Gunicorn on port 8000
 
 ## Environment Variables
 
@@ -97,6 +103,7 @@ Set in `.env` file (create from `.env.example` if available):
 | `DJANGO_SUPERUSER_USERNAME` | (optional) | Auto-create superuser on startup |
 | `DJANGO_SUPERUSER_PASSWORD` | (optional) | Superuser password |
 | `DJANGO_SUPERUSER_EMAIL` | (optional) | Superuser email |
+| `WORKER_INLINE` | `true` | Run db_worker inside web container. Set `false` when using a separate worker service |
 
 ## Volumes
 

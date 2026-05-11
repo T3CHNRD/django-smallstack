@@ -42,12 +42,7 @@ Self-hosted VPS with Docker is an **emerging trend** that reduces costs by conso
 │         ├──── www.myapp.com ────▶ ┌─────────────────┐       │
 │         │                         │  Django App     │       │
 │         │                         │  (web container)│       │
-│         │                         └─────────────────┘       │
-│         │                                                   │
-│         │                         ┌─────────────────┐       │
-│         │                         │  Background     │       │
-│         │                         │  Worker         │       │
-│         │                         │  (db_worker)    │       │
+│         │                         │  + inline worker│       │
 │         │                         └─────────────────┘       │
 │         │                                                   │
 │         ├──── api.myapp.com ────▶ ┌─────────────────┐       │
@@ -164,10 +159,12 @@ image: myapp                # Usually same as service
 servers:
   web:
     - 123.45.67.89          # Your VPS IP address
-  worker:
-    hosts:
-      - 123.45.67.89        # Same VPS as web
-    cmd: python manage.py db_worker --queue-name "*"
+  # Worker runs inline by default (WORKER_INLINE=true).
+  # Uncomment for separate worker container on high-traffic sites:
+  # worker:
+  #   hosts:
+  #     - 123.45.67.89      # Same VPS as web
+  #   cmd: python manage.py db_worker --queue-name "*"
 
 volumes:
   - /root/myapp_data/media:/app/media   # Update 'myapp' to your app name
@@ -244,10 +241,11 @@ image: my-app
 servers:
   web:
     - 123.45.67.89  # Your VPS IP
-  worker:
-    hosts:
-      - 123.45.67.89  # Same VPS as web
-    cmd: python manage.py db_worker --queue-name "*"
+  # Worker runs inline by default. Uncomment for separate container:
+  # worker:
+  #   hosts:
+  #     - 123.45.67.89  # Same VPS as web
+  #   cmd: python manage.py db_worker --queue-name "*"
 
 ssh:
   user: root
@@ -397,13 +395,22 @@ The old container **keeps serving traffic** until the new one passes health chec
 
 ## Background Worker
 
-{{ project_name }} includes a **background worker** role in the Kamal deployment configuration. This runs the `db_worker` management command to process background tasks (emails, data processing, etc.) in production.
+{{ project_name }} runs the background task worker (`db_worker`) **inline inside the web container** by default. No separate worker role or container is needed — background tasks (emails, data processing, etc.) process automatically.
 
-### How It Works
+This is controlled by the `WORKER_INLINE` environment variable, which defaults to `true`. The entrypoint script starts `db_worker` as a background process with automatic restart on crash.
 
-The `worker` role in `deploy.yml` uses the **same Docker image** as the web role but with a different startup command:
+### Scaling Up: Separate Worker Container
+
+For high-traffic sites or heavy background workloads, you can split the worker into a separate container for independent scaling and log separation:
+
+1. Add `WORKER_INLINE: "false"` to `env > clear` in `deploy.yml`
+2. Uncomment the `worker` role in `deploy.yml`:
 
 ```yaml
+env:
+  clear:
+    WORKER_INLINE: "false"
+
 servers:
   web:
     - 123.45.67.89
@@ -413,12 +420,9 @@ servers:
     cmd: python manage.py db_worker --queue-name "*"
 ```
 
-- **Same image** — No separate Dockerfile or build step
-- **Same entrypoint** — Migrations and collectstatic run (idempotent, safe from both containers)
-- **No proxy needed** — The worker has no HTTP traffic, so Kamal skips proxy configuration for it
-- **Shared volumes** — Worker reads/writes the same database as the web container
+The separate worker uses the **same Docker image** as the web role — no extra build step. It shares the same volumes and environment, and deploys automatically with `kamal deploy`.
 
-### Worker Commands
+### Worker Commands (Separate Worker Only)
 
 ```bash
 # View worker logs
@@ -427,14 +431,11 @@ kamal app logs --role worker
 # View last 100 lines of worker logs
 kamal app logs --role worker -n 100
 
-# Check worker container status
-kamal app details
-
 # Run a command in the worker container
 kamal app exec --role worker "python manage.py shell"
 ```
 
-The worker deploys automatically alongside the web container when you run `kamal deploy`. No extra steps required.
+When using the inline worker (default), worker output appears in the regular web container logs: `kamal app logs`.
 
 > **See also:** [Background Tasks](/help/smallstack/background-tasks/) for details on defining and enqueueing tasks.
 
@@ -644,7 +645,7 @@ Check ALLOWED_HOSTS includes the container hostname pattern or use `*` for inter
 |------|--------------|---------------|
 | Deploy | `make deploy` | `kamal deploy` |
 | View logs | `make logs` | `kamal app logs` |
-| View worker logs | — | `kamal app logs --role worker` |
+| View worker logs | — | `kamal app logs --role worker` (separate worker only) |
 | First-time setup | — | `kamal setup` |
 | Rollback | — | `kamal rollback` |
 | Shell access | — | `kamal app exec -i bash` |

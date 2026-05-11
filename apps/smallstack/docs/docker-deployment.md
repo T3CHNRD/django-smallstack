@@ -138,6 +138,40 @@ docker compose up -d
 docker compose exec web python manage.py createsuperuser
 ```
 
+## Background Worker
+
+{{ project_name }} runs the background task worker (`db_worker`) **inline inside the web container** by default. No separate worker service is needed — background tasks (emails, data processing, etc.) process automatically.
+
+This is controlled by the `WORKER_INLINE` environment variable, which defaults to `true`.
+
+### Scaling Up: Separate Worker Container
+
+For high-traffic sites, set `WORKER_INLINE=false` on the web service and uncomment the `worker` service in `docker-compose.yml`:
+
+```yaml
+services:
+  web:
+    environment:
+      - WORKER_INLINE=false
+      # ... other env vars
+
+  worker:
+    build: .
+    command: python manage.py db_worker --queue-name "*"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DATABASE_PATH=/data/db.sqlite3
+    volumes:
+      - db_data:/data
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+```
+
+> **See also:** [Background Tasks](/help/smallstack/background-tasks/) for trade-offs between inline and separate worker modes.
+
 ## Data Persistence
 
 {{ project_name }} uses **SQLite by default**—a production-ready database that requires no additional services. Your data is stored in Docker volumes that persist across container rebuilds:

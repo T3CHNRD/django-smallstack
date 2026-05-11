@@ -95,9 +95,9 @@
       "id": "background-tasks",
       "file": "background-tasks.md",
       "name": "Background Tasks",
-      "description": "Django Tasks framework with django-tasks-db backend. Task definition, enqueuing, the db_worker management command, and scheduled/periodic tasks.",
-      "keywords": ["task", "background", "worker", "queue", "async", "scheduled", "cron", "db_worker"],
-      "use_when": "Adding background jobs, scheduled tasks, or understanding the task queue."
+      "description": "Django Tasks framework with django-tasks-db backend. Task definition, enqueuing, the db_worker management command, inline vs separate worker deployment, and scaling guidance.",
+      "keywords": ["task", "background", "worker", "queue", "async", "scheduled", "cron", "db_worker", "WORKER_INLINE", "inline"],
+      "use_when": "Adding background jobs, configuring the worker deployment (inline vs separate), or understanding the task queue."
     },
     {
       "id": "activity-tracking",

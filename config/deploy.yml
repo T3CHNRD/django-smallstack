@@ -17,13 +17,20 @@ image: myapp
 servers:
   web:
     - 123.45.67.89  # Replace with your VPS IP
-  worker:
-    hosts:
-      - 123.45.67.89  # Same VPS as web
-    cmd: python manage.py db_worker --queue-name "*"
-    proxy: false
-    options:
-      health-cmd: "true"
+  # Separate worker role (optional, for high-traffic sites).
+  # By default, the web container runs db_worker inline via WORKER_INLINE=true.
+  # To use a separate worker instead:
+  #   1. Add WORKER_INLINE: "false" to env > clear below
+  #   2. Uncomment the worker block below
+  # See docs/skills/background-tasks.md for trade-offs.
+  #
+  # worker:
+  #   hosts:
+  #     - 123.45.67.89  # Same VPS as web
+  #   cmd: python manage.py db_worker --queue-name "*"
+  #   proxy: false
+  #   options:
+  #     health-cmd: "true"
 
 # SSH configuration
 ssh:

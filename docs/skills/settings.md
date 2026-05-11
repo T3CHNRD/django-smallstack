@@ -162,6 +162,14 @@ TASKS = {
 }
 ```
 
+### Inline Worker (env var, not a Django setting)
+
+`WORKER_INLINE` is a **deployment env var** checked in `docker-entrypoint.sh` (not in Django settings). It follows the same pattern as `BACKUP_CRON_ENABLED`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WORKER_INLINE` | `true` | Run `db_worker` inside the web container. Set `false` when using a separate worker service/role. |
+
 ### Email (smallstack.py)
 
 ```python

@@ -192,7 +192,28 @@ kamal app exec "python manage.py createsuperuser"
 
 ## Background Worker
 
-The `worker` role runs `db_worker` to process background tasks in production. It uses the same Docker image as web with a different `cmd`. No proxy is configured for the worker since it has no HTTP traffic.
+By default, the web container runs `db_worker` inline as a background process (controlled by `WORKER_INLINE`, which defaults to `true`). No separate worker role is needed — background tasks process automatically within the web container.
+
+For high-traffic sites or heavy background workloads, you can split the worker into a separate container by setting `WORKER_INLINE: "false"` in `env > clear` and uncommenting the `worker` role in `deploy.yml`:
+
+```yaml
+env:
+  clear:
+    WORKER_INLINE: "false"
+
+servers:
+  web:
+    - 123.45.67.89
+  worker:
+    hosts:
+      - 123.45.67.89
+    cmd: python manage.py db_worker --queue-name "*"
+    proxy: false
+    options:
+      health-cmd: "true"
+```
+
+The separate worker uses the same Docker image as web with a different `cmd`. No proxy is configured since it has no HTTP traffic.
 
 - Deploys automatically with `kamal deploy`
 - Shares the same volumes and environment as web

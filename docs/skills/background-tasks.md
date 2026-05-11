@@ -143,24 +143,60 @@ Or with a specific queue:
 uv run python manage.py db_worker --queue-name "email"
 ```
 
-### Production (Docker Compose)
+### Production (Docker Compose / Kamal)
 
-The `worker` service in `docker-compose.yml` runs automatically:
+By default, the web container runs `db_worker` inline — no separate worker service needed. The entrypoint script launches `db_worker` as a background process with a restart loop and cleans it up via a signal trap on container stop.
+
+This is controlled by the `WORKER_INLINE` env var, which defaults to `true`.
+
+### Separate Worker (Scaling Up)
+
+For high-traffic sites or heavy background workloads, you can run the worker as a separate container for independent scaling and log separation.
+
+**Docker Compose:** Set `WORKER_INLINE=false` on the web service and uncomment the `worker` service in `docker-compose.yml`:
 
 ```yaml
-worker:
-  build: .
-  command: python manage.py db_worker --queue-name "*"
-  volumes:
-    - db_data:/data
-  depends_on:
-    web:
-      condition: service_healthy
+services:
+  web:
+    environment:
+      - WORKER_INLINE=false
+      # ... other env vars
+  worker:
+    build: .
+    command: python manage.py db_worker --queue-name "*"
+    # ...
 ```
 
-### Production (Kamal)
+**Kamal:** Add `WORKER_INLINE: "false"` to `env > clear` and uncomment the `worker` role in `deploy.yml`:
 
-Kamal deploys the worker as an accessory or secondary container. See `kamal-deployment.md`.
+```yaml
+env:
+  clear:
+    WORKER_INLINE: "false"
+servers:
+  web:
+    - 123.45.67.89
+  worker:
+    hosts:
+      - 123.45.67.89
+    cmd: python manage.py db_worker --queue-name "*"
+```
+
+#### Trade-offs
+
+| | Inline (default) | Separate Container |
+|---|---|---|
+| RAM per project | ~1x | ~2x (web + worker) |
+| Worker crash recovery | Restart loop restarts process | Docker restarts container |
+| Log separation | Mixed in one stream | Separate streams |
+| Independent scaling | No | Yes |
+| Deploy complexity | Single container | Worker role in deploy config |
+
+#### When to switch to separate
+
+- High-traffic sites where worker load could starve web requests
+- Projects with heavy or long-running background tasks
+- When you need independent scaling or monitoring
 
 ## Built-in Tasks
 

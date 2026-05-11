@@ -27,6 +27,21 @@ python manage.py ensure_superuser
 echo "Starting scheduled tasks..."
 supercronic -passthrough-logs /app/scripts/smallstack-cron &
 
+# Run db_worker inline by default (single-container deployment)
+# Set WORKER_INLINE=false to disable when using a separate worker container.
+if [ "${WORKER_INLINE:-true}" = "true" ]; then
+    echo "Starting inline db_worker..."
+    (
+        while true; do
+            python manage.py db_worker --queue-name "*"
+            echo "Inline worker exited (code $?), restarting in 5s..."
+            sleep 5
+        done
+    ) &
+    WORKER_PID=$!
+    trap "kill $WORKER_PID 2>/dev/null; wait $WORKER_PID 2>/dev/null" EXIT
+fi
+
 echo "Starting application..."
 # Execute the main container command
 exec "$@"

@@ -728,7 +728,7 @@ send_email_task.enqueue(
 
 The worker must be running to process email tasks:
 - **Local dev:** `uv run python manage.py db_worker`
-- **Docker/Kamal:** Worker service runs automatically
+- **Docker/Kamal:** Worker runs automatically (inline in the web container by default)
 
 See `docs/skills/background-tasks.md` for the full task API.
 
@@ -755,29 +755,30 @@ docker compose up -d --build
 **Logs:**
 ```bash
 docker compose logs web -f
-docker compose logs worker -f
 ```
 
 ### 7.2 Docker Architecture
 
+By default, the web container runs everything — Gunicorn, cron, and the background worker:
+
 ```
 ┌─────────────────────────────────────┐
-│  web container                      │
+│  web container (single container)   │
 │  ├── gunicorn (2 workers, 4 threads)│
+│  ├── db_worker (background tasks)   │
 │  ├── supercronic (cron daemon)      │
 │  │   ├── heartbeat via curl (every 1m)│
 │  │   ├── prune activity (every 15m) │
 │  │   └── backup db (daily 2 AM)     │
 │  └── port 8000                      │
 ├─────────────────────────────────────┤
-│  worker container                   │
-│  └── db_worker (processes tasks)    │
-├─────────────────────────────────────┤
 │  volumes                            │
 │  ├── db_data → /data (SQLite)       │
 │  └── media_data → /app/media        │
 └─────────────────────────────────────┘
 ```
+
+For high-traffic sites, set `WORKER_INLINE=false` and uncomment the separate `worker` service in `docker-compose.yml`. See `docs/skills/background-tasks.md` for trade-offs.
 
 ---
 
@@ -802,10 +803,12 @@ image: myapp
 servers:
   web:
     - 123.45.67.89                # Your VPS IP
-  worker:
-    hosts:
-      - 123.45.67.89
-    cmd: python manage.py db_worker --queue-name "*"
+  # Worker runs inline by default (WORKER_INLINE=true).
+  # Uncomment for separate worker container on high-traffic sites:
+  # worker:
+  #   hosts:
+  #     - 123.45.67.89
+  #   cmd: python manage.py db_worker --queue-name "*"
 
 volumes:
   - /root/myapp_data/media:/app/media
@@ -875,8 +878,7 @@ curl https://myapp.com/health/    # Should return {"status": "ok"}
 ```bash
 kamal deploy                      # Deploy latest code
 kamal rollback                    # Rollback to previous version
-kamal app logs                    # View web logs
-kamal app logs --role worker      # View worker logs
+kamal app logs                    # View web logs (includes inline worker output)
 kamal app exec "python manage.py migrate"       # Run management commands
 kamal app exec "python manage.py create_api_token admin"  # Create API token
 kamal lock release                # Release stuck deploy lock

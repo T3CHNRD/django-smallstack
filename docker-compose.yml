@@ -26,21 +26,27 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  worker:
-    build: .
-    command: python manage.py db_worker --queue-name "*"
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.production
-      - ALLOWED_HOSTS=localhost,127.0.0.1
-      - DATABASE_PATH=/data/db.sqlite3
-    volumes:
-      - db_data:/data
-    env_file:
-      - .env
-    depends_on:
-      web:
-        condition: service_healthy
-    restart: unless-stopped
+  # Separate worker container (optional, for high-traffic sites).
+  # By default, the web container runs db_worker inline via WORKER_INLINE=true.
+  # To use a separate worker instead:
+  #   1. Add WORKER_INLINE=false to the web service environment
+  #   2. Uncomment the worker service below
+  #
+  # worker:
+  #   build: .
+  #   command: python manage.py db_worker --queue-name "*"
+  #   environment:
+  #     - DJANGO_SETTINGS_MODULE=config.settings.production
+  #     - ALLOWED_HOSTS=localhost,127.0.0.1
+  #     - DATABASE_PATH=/data/db.sqlite3
+  #   volumes:
+  #     - db_data:/data
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     web:
+  #       condition: service_healthy
+  #   restart: unless-stopped
 
 # PostgreSQL service (optional - uncomment to use instead of SQLite)
 # See /help/database-postgresql/ for setup guide

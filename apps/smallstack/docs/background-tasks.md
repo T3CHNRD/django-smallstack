@@ -49,7 +49,7 @@ uv run python manage.py db_worker
 
 In development (DEBUG=True), the worker auto-reloads when code changes. Keep it running in a separate terminal while developing.
 
-For production, run the worker as a separate process (see [Docker Deployment](/help/smallstack/docker-deployment/)).
+In production, the worker runs automatically inside the web container — no extra setup needed. For high-traffic sites that need independent scaling, you can run the worker as a separate container by setting `WORKER_INLINE=false`. See [Docker Deployment](/help/smallstack/docker-deployment/) for details.
 
 ## Defining Tasks
 
@@ -315,40 +315,43 @@ To use Celery instead:
 
 See the [Celery documentation](https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html) for detailed setup.
 
-## Docker Deployment
+## Production Deployment
 
-When deploying with Docker, run the worker as a separate service. {{ project_name }} includes a worker service in `docker-compose.yml`:
+In production (Docker Compose or Kamal), the background worker runs **inline inside the web container** by default. No separate worker service or configuration is needed — the entrypoint script starts `db_worker` as a background process automatically.
+
+This is controlled by the `WORKER_INLINE` environment variable, which defaults to `true`.
+
+### Scaling Up: Separate Worker Container
+
+For high-traffic sites or heavy background workloads, you can split the worker into a separate container. This gives you independent scaling, separate log streams, and Docker-managed crash recovery.
+
+Set `WORKER_INLINE=false` on the web service and uncomment the `worker` service/role in your deployment config:
+
+**Docker Compose:**
 
 ```yaml
 services:
   web:
-    build: .
-    # ... web settings
+    environment:
+      - WORKER_INLINE=false
 
   worker:
     build: .
     command: python manage.py db_worker --queue-name "*"
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.production
-      - ALLOWED_HOSTS=localhost,127.0.0.1
-      - DATABASE_PATH=/data/db.sqlite3
     volumes:
-      - db_data:/data  # Share database volume with web
+      - db_data:/data
     depends_on:
       web:
         condition: service_healthy
-    restart: unless-stopped
 ```
 
-The worker shares the same database volume as the web service, ensuring both can read/write tasks.
-
-For production with PostgreSQL, both services connect to the same database server.
-
-## Kamal Deployment
-
-When deploying with Kamal, the background worker is **built-in**. The `deploy.yml` configuration includes a `worker` role that runs `db_worker` automatically:
+**Kamal:**
 
 ```yaml
+env:
+  clear:
+    WORKER_INLINE: "false"
+
 servers:
   web:
     - 123.45.67.89
@@ -358,17 +361,21 @@ servers:
     cmd: python manage.py db_worker --queue-name "*"
 ```
 
-The worker uses the same Docker image as the web container — no extra build or Dockerfile changes needed. It deploys automatically when you run `kamal deploy`.
+### Inline vs Separate: Trade-offs
 
-```bash
-# View worker logs
-kamal app logs --role worker
+| | Inline (default) | Separate Container |
+|---|---|---|
+| RAM per project | ~1x | ~2x (web + worker) |
+| Worker crash recovery | Restart loop restarts process | Docker restarts container |
+| Log separation | Mixed in one stream | Separate streams |
+| Independent scaling | No | Yes |
+| Deploy complexity | Single container | Worker role in deploy config |
 
-# Check all container status
-kamal app details
-```
+**Use inline** for most sites — marketing pages, internal tools, apps with occasional background tasks.
 
-> **See also:** [Kamal Deployment](/help/smallstack/kamal-deployment/) for full deployment documentation.
+**Switch to separate** when worker load could starve web requests, you have heavy/long-running tasks, or you need independent scaling or monitoring.
+
+> **See also:** [Docker Deployment](/help/smallstack/docker-deployment/) and [Kamal Deployment](/help/smallstack/kamal-deployment/) for full deployment documentation.
 
 ## Troubleshooting
 
