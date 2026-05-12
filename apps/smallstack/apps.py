@@ -12,6 +12,7 @@ class SmallStackConfig(AppConfig):
     help_content_dir = "docs"
     help_section_slug = "smallstack"
     help_section_title = "SmallStack Reference"
+    help_slides_dir = "docs/slides"
 
     def ready(self):
         from apps.smallstack import dashboard

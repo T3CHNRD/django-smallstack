@@ -409,6 +409,17 @@ def get_all_pages() -> list:
     return pages
 
 
+def _get_app_slides_source() -> Path | None:
+    """Find the first app that provides slides via help_slides_dir."""
+    for app_config in apps.get_app_configs():
+        slides_dir = getattr(app_config, "help_slides_dir", None)
+        if slides_dir:
+            slides_path = Path(app_config.path) / slides_dir
+            if slides_path.is_dir():
+                return slides_path
+    return None
+
+
 def _resolve_slides_root(content_root: str | None = None) -> Path:
     """Resolve the slides content root directory.
 
@@ -421,6 +432,10 @@ def _resolve_slides_root(content_root: str | None = None) -> Path:
         if not str(resolved).startswith(str(base_dir.resolve())):
             raise ValueError("content_root must be within BASE_DIR")
         return resolved
+    # Check app-contributed slides first
+    app_slides = _get_app_slides_source()
+    if app_slides:
+        return app_slides
     return SLIDES_DIR
 
 

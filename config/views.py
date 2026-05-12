@@ -23,7 +23,7 @@ def legal_page_view(request, page):
     if page not in LEGAL_PAGES:
         raise Http404("Page not found")
 
-    legal_dir = Path(__file__).resolve().parent.parent / "apps" / "help" / "content" / "legal"
+    legal_dir = Path(__file__).resolve().parent.parent / "apps" / "website" / "content" / "legal"
     file_path = legal_dir / f"{page}.md"
 
     if not file_path.exists():

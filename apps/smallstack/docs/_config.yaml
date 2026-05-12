@@ -334,6 +334,12 @@ pages:
     icon: "ai"
     category: "Development"
 
+  - slug: custom-api-endpoints
+    title: "Custom API Endpoints"
+    description: "Build non-CRUD API endpoints with the @api_view decorator"
+    icon: "code"
+    category: "Development"
+
   - slug: faq
     title: "FAQ"
     description: "Frequently asked questions"

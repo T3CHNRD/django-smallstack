@@ -18,7 +18,7 @@ When the user says "update docs and skills" (or similar), this skill defines whi
 | Skill | `docs/skills/api.md` | Full API reference: auth, CRUD, endpoints, config, serialization |
 | Skill | `docs/skills/api-discovery.md` | Schema endpoints, OpenAPI, OPTIONS metadata, Swagger/ReDoc |
 | Skill | `docs/skills/custom-api-endpoints.md` | `@api_view` decorator, non-CRUD endpoints |
-| Help | `apps/help/content/developers/custom-api-endpoints.md` | User-facing custom endpoint guide |
+| Help | `apps/smallstack/docs/custom-api-endpoints.md` | User-facing custom endpoint guide |
 | Help | `apps/smallstack/docs/explorer-rest-api.md` | Explorer API (uses same auth/serialization layer) |
 | Config | `apps/smallstack/docs/_config.yaml` | Help page registry (add new pages here) |
 
@@ -52,7 +52,7 @@ When the user says "update docs and skills" (or similar), this skill defines whi
 | Type | File | What it covers |
 |------|------|----------------|
 | Skill | `docs/skills/navigation.md` | Nav registry, zones, sidebar/topbar |
-| Help | `apps/help/content/components/navigation.md` | User-facing nav docs |
+| Help | `apps/smallstack/docs/navigation.md` | User-facing nav docs (bundled SmallStack reference) |
 | Help | `apps/smallstack/docs/navigation.md` | Bundled nav reference |
 
 ### Templates & Theming (`templates/`, `static/`)

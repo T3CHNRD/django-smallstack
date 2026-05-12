@@ -11,22 +11,25 @@ The help system includes a **slide presentation mode** — a focused, one-slide-
 
 ## How It Works
 
-Slides live in `apps/help/content/slides/`. A `_slides.yaml` config defines decks, and each slide is a separate `.md` file:
+Slides are contributed by apps via the `help_slides_dir` AppConfig attribute. SmallStack's bundled slides live in `apps/smallstack/docs/slides/`. A `_slides.yaml` config defines decks, and each slide is a separate `.md` file:
 
 ```
-apps/help/content/slides/
+apps/smallstack/docs/slides/
 ├── _slides.yaml              # Deck definitions
-└── activity-tracking/        # One folder per deck
-    ├── intro.md
-    ├── how-it-works.md
-    └── dashboard.md
+├── activity-tracking/        # One folder per deck
+│   ├── intro.md
+│   ├── how-it-works.md
+│   └── dashboard.md
+└── features/
+    ├── philosophy.md
+    └── ...
 ```
 
 **URL:** `/help/slides/<deck-slug>/`
 
 ## Creating a Slide Deck
 
-1. Add a deck to `apps/help/content/slides/_slides.yaml`:
+1. Add a deck to your app's slides `_slides.yaml` (e.g., `apps/smallstack/docs/slides/_slides.yaml`):
 
 ```yaml
 decks:
@@ -45,7 +48,7 @@ decks:
 2. Create a folder matching the deck slug with one `.md` file per slide:
 
 ```
-apps/help/content/slides/my-deck/
+apps/smallstack/docs/slides/my-deck/
 ├── intro.md
 ├── details.md
 └── summary.md
@@ -112,12 +115,24 @@ def my_view(request):
 
 Then include the slide viewer partial in your template. See the [About page](/about/) for a working example.
 
+## App-Contributed Slides
+
+The recommended way to contribute slides is via AppConfig. Set `help_slides_dir` on your app's config:
+
+```python
+class MyAppConfig(AppConfig):
+    name = "apps.myapp"
+    help_slides_dir = "docs/slides"  # Relative to app directory
+```
+
+The help system discovers this automatically and uses it as the default slides source.
+
 ## Custom Content Root
 
-Downstream projects can store slides outside the default location using the `content_root` query parameter:
+You can also use the `content_root` query parameter for one-off overrides:
 
 ```
 /help/slides/my-deck/?content_root=apps/website/slides
 ```
 
-The path is relative to `BASE_DIR`. Place a `_slides.yaml` and slide folders in that directory. This lets derived projects maintain their own slide decks without modifying the help app.
+The path is relative to `BASE_DIR`. Place a `_slides.yaml` and slide folders in that directory.

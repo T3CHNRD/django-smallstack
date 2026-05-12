@@ -6,9 +6,10 @@ This skill describes how to create, edit, and manage help documentation in the S
 
 The help system is a file-based documentation viewer that renders Markdown files as HTML pages. It lives in `apps/help/` and uses:
 
-- **Markdown files** for content (`apps/help/content/*.md`)
+- **Markdown files** for content (`apps/help/content/*.md` for project docs, app `docs/` dirs for app-contributed docs)
 - **YAML config** for navigation, variables, and categories (`apps/help/content/_config.yaml`)
 - **App-contributed docs** — Apps can register their own docs section via AppConfig
+- **App-contributed slides** — Apps can register slides via `help_slides_dir` on AppConfig
 - **Django templates** for rendering (`templates/help/`)
 - **CSS/JS** for styling (`static/smallstack/help/`)
 
@@ -30,7 +31,17 @@ apps/smallstack/docs/             # Bundled SmallStack reference docs (app-contr
 ├── _config.yaml                  # SmallStack section config with categories
 ├── getting-started.md
 ├── kamal-deployment.md
+├── custom-api-endpoints.md       # Moved from help/content/developers/
+├── slides/                       # Slide decks (moved from help/content/slides/)
+│   ├── _slides.yaml
+│   ├── activity-tracking/
+│   └── features/
 └── ...
+
+apps/website/content/             # Site-specific content
+└── legal/
+    ├── privacy-policy.md
+    └── terms-of-service.md
 
 templates/help/
 ├── help_index.html           # Main help index (all sections)
@@ -89,6 +100,7 @@ class SmallStackConfig(AppConfig):
     help_content_dir = "docs"           # Relative to app directory
     help_section_slug = "smallstack"    # URL slug for the section
     help_section_title = "SmallStack Reference"
+    help_slides_dir = "docs/slides"     # Slide decks contributed by this app
 ```
 
 The app's `docs/` directory must contain a `_config.yaml` and `.md` files.
@@ -362,7 +374,7 @@ Help pages use CSS from `static/smallstack/help/css/help.css`:
 
 ## Bundled SmallStack Docs
 
-SmallStack ships 35+ reference pages in `apps/smallstack/docs/`. These are **automatically contributed** as a "SmallStack Reference" section via AppConfig when `SMALLSTACK_DOCS_ENABLED=True` (the default).
+SmallStack ships 50+ reference pages in `apps/smallstack/docs/`. These are **automatically contributed** as a "SmallStack Reference" section via AppConfig when `SMALLSTACK_DOCS_ENABLED=True` (the default). SmallStack also contributes slide decks via `help_slides_dir`.
 
 The SmallStack docs use category grouping with 12 categories: Getting Started, Development, Customization, Theming, UI Components, Configuration, Database, Auth & Users, Built-in Tools, Packages, Deployment, and Reference.
 

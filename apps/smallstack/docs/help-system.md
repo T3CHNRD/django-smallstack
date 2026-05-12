@@ -11,8 +11,8 @@ The help system is a file-based documentation viewer built into {{ project_name 
 
 Documentation is loaded from two sources:
 
-- **`apps/help/content/`** - Your project's documentation (conflict-free zone)
-- **App-contributed docs** - Apps can register their own doc sections (e.g., SmallStack reference docs)
+- **`apps/help/content/`** - Your project's root documentation (conflict-free zone)
+- **App-contributed docs** - Apps register their own doc sections via AppConfig (e.g., SmallStack reference docs, slide decks)
 
 The system supports:
 
@@ -26,7 +26,7 @@ The system supports:
 
 ```
 apps/help/
-├── content/                 # YOUR docs (edit freely)
+├── content/                 # YOUR project-level docs (edit freely)
 │   ├── _config.yaml         # Your sections and pages
 │   ├── index.md             # Your welcome page
 │   └── guides/              # Your custom sections
@@ -37,8 +37,22 @@ apps/help/
 apps/smallstack/docs/        # SmallStack docs (app-contributed)
 ├── _config.yaml             # SmallStack config with categories
 ├── getting-started.md
+├── custom-api-endpoints.md
+├── slides/                  # Slide decks (app-contributed)
+│   ├── _slides.yaml
+│   ├── activity-tracking/
+│   └── features/
 └── ...
+
+apps/website/content/        # Site-specific content (not in help nav)
+└── legal/
+    ├── privacy-policy.md
+    └── terms-of-service.md
 ```
+
+### Content Ownership Principle
+
+Each app owns its own docs. The `apps/help/content/` directory holds only **project-level root docs** (welcome, getting started, theme scenarios). Feature-specific docs live with their owning app and are contributed via AppConfig attributes. Legal pages live in `apps/website/` since they're site-specific standalone pages, not part of the help navigation.
 
 **URLs:**
 - `/help/` - Documentation index (all sections)
@@ -351,6 +365,77 @@ For collapsible Q&A sections:
 | 🔒 | `lock` | Authentication, security |
 | 🧊 | `cube` | Dependencies, 3D |
 | 💻 | `code` | Code, development |
+
+## App-Level Help Docs
+
+Apps can contribute their own help section by setting attributes on their `AppConfig`. This is the recommended pattern for feature-specific documentation — each app owns its own docs.
+
+### Registering an App's Docs
+
+Add these attributes to your app's `apps.py`:
+
+```python
+class MyAppConfig(AppConfig):
+    name = "apps.myapp"
+    help_content_dir = "docs"              # Directory relative to app path
+    help_section_slug = "myapp"            # URL slug: /help/myapp/
+    help_section_title = "My App Docs"     # Display title
+    help_slides_dir = "docs/slides"        # Optional: slide decks
+```
+
+### Directory Layout
+
+```
+apps/myapp/
+├── apps.py                  # AppConfig with attributes above
+├── docs/
+│   ├── _config.yaml         # Section config (pages, categories, variables)
+│   ├── getting-started.md
+│   ├── api-reference.md
+│   └── slides/              # Optional slide decks
+│       ├── _slides.yaml
+│       └── my-deck/
+│           ├── intro.md
+│           └── summary.md
+└── ...
+```
+
+The app's `docs/_config.yaml` follows the same format as any section config:
+
+```yaml
+title: "My App Docs"
+description: "Documentation for My App"
+
+categories:
+  - "Getting Started"
+  - "Reference"
+
+pages:
+  - slug: getting-started
+    title: "Getting Started"
+    icon: "rocket"
+    category: "Getting Started"
+  - slug: api-reference
+    title: "API Reference"
+    icon: "code"
+    category: "Reference"
+```
+
+### How Discovery Works
+
+The help system calls `_get_app_help_sources()` which scans all installed apps for `help_content_dir` and `help_section_slug` attributes. Matching apps are appended as sections after the project's own sections. Slide decks are discovered similarly via `help_slides_dir`.
+
+### Example: SmallStack's Own Docs
+
+SmallStack uses this exact pattern to contribute 50+ reference pages:
+
+```python
+class SmallStackConfig(AppConfig):
+    help_content_dir = "docs"
+    help_section_slug = "smallstack"
+    help_section_title = "SmallStack Reference"
+    help_slides_dir = "docs/slides"
+```
 
 ## Slide Viewer
 

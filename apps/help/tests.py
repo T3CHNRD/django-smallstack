@@ -178,7 +178,7 @@ class TestSlideUtils:
 
     def test_custom_content_root(self):
         """get_slides_config with explicit default path should work."""
-        config = get_slides_config(content_root="apps/help/content/slides")
+        config = get_slides_config(content_root="apps/smallstack/docs/slides")
         assert isinstance(config, dict)
         assert "decks" in config
 
@@ -260,7 +260,7 @@ class TestHelpViews:
         """Slide view should accept content_root parameter."""
         response = client.get(
             reverse("help:slides", kwargs={"deck_slug": "activity-tracking"}),
-            {"content_root": "apps/help/content/slides"},
+            {"content_root": "apps/smallstack/docs/slides"},
         )
         assert response.status_code == 200
 
