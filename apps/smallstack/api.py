@@ -1750,3 +1750,27 @@ def api_docs_swagger(request: HttpRequest) -> HttpResponse:
 def api_docs_redoc(request: HttpRequest) -> HttpResponse:
     """Serve ReDoc pointing at the OpenAPI schema."""
     return _api_docs_response(request, "smallstack/api/redoc.html")
+
+
+# ---------------------------------------------------------------------------
+# Public re-exports — stable surface for downstream apps (apps.mcp, custom
+# views, tests). We keep the leading-underscore implementations intact to
+# preserve git blame and minimize the public-API surface to just the names
+# below.
+# ---------------------------------------------------------------------------
+
+from .crud import _apply_list_filters as _apply_list_filters_impl  # noqa: E402
+from .crud import _apply_list_search as _apply_list_search_impl  # noqa: E402
+
+# Object → dict, honoring expand_fields + api_extra_fields.
+serialize = _serialize
+# Apply ?q= text search against crud_config.search_fields.
+apply_search = _apply_list_search_impl
+# Apply per-field query filters against crud_config.filter_fields.
+apply_filters = _apply_list_filters_impl
+# Apply ?ordering= against the validated set of allowed fields.
+apply_ordering = _apply_ordering_fields
+# Map a Django form field to an OpenAPI-shaped {type, required, ...} dict.
+field_to_schema = _field_to_schema
+# Build an endpoint-shape spec from a CRUDView (URL, fields, filters, etc.).
+build_endpoint_schema = _build_endpoint_schema
