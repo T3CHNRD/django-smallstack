@@ -14,6 +14,7 @@ failure mode observed downstream — please don't "simplify" them away.
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import logging
 import time
@@ -147,34 +148,46 @@ class McpHttpView(View):
         params = payload.get("params") or {}
         logger.info("MCP REQ method=%s id=%s params_keys=%s", method, rpc_id, list(params.keys()))
 
-        # notifications/* — must return 202 + EMPTY body. Don't authenticate
-        # them; some clients send notifications/initialized before any auth.
-        if method.startswith("notifications/"):
-            return HttpResponse(status=202)
+        response: HttpResponse | None = None
+        try:
+            # notifications/* — must return 202 + EMPTY body. Don't authenticate
+            # them; some clients send notifications/initialized before any auth.
+            if method.startswith("notifications/"):
+                response = HttpResponse(status=202)
+                return response
 
-        # initialize doesn't require auth — it's a handshake. But we still
-        # accept Bearer if provided (so the rest of the session has user ctx).
-        if method == "initialize":
-            client_version = (params.get("protocolVersion") or "").strip() or None
-            negotiated = _negotiate_protocol_version(client_version)
-            result = {
-                "protocolVersion": negotiated,
-                "serverInfo": _server_info(),
-                "capabilities": _capabilities(),
-            }
-            duration = (time.perf_counter() - started) * 1000
-            logger.info("MCP RESP method=initialize status=200 duration_ms=%.2f", duration)
-            return _rpc_result(rpc_id, result)
+            # initialize doesn't require auth — it's a handshake. But we still
+            # accept Bearer if provided (so the rest of the session has user ctx).
+            if method == "initialize":
+                client_version = (params.get("protocolVersion") or "").strip() or None
+                negotiated = _negotiate_protocol_version(client_version)
+                result = {
+                    "protocolVersion": negotiated,
+                    "serverInfo": _server_info(),
+                    "capabilities": _capabilities(),
+                }
+                response = _rpc_result(rpc_id, result)
+                return response
 
-        # ping is auth-free
-        if method == "ping":
-            return _rpc_result(rpc_id, {})
+            # ping is auth-free
+            if method == "ping":
+                response = _rpc_result(rpc_id, {})
+                return response
 
-        # Capability probes — return empty success rather than -32601.
-        if method == "resources/list":
-            return _rpc_result(rpc_id, {"resources": []})
-        if method == "prompts/list":
-            return _rpc_result(rpc_id, {"prompts": []})
+            # Capability probes — return empty success rather than -32601.
+            if method == "resources/list":
+                response = _rpc_result(rpc_id, {"resources": []})
+                return response
+            if method == "prompts/list":
+                response = _rpc_result(rpc_id, {"prompts": []})
+                return response
+        finally:
+            if response is not None:
+                duration = (time.perf_counter() - started) * 1000
+                logger.info(
+                    "MCP RESP method=%s status=%d duration_ms=%.2f",
+                    method, response.status_code, duration,
+                )
 
         # Everything below requires authentication.
         user, token, auth_err = authenticate(request)
@@ -217,7 +230,10 @@ class McpHttpView(View):
 
                 tool_started = time.perf_counter()
                 try:
-                    result_value = asyncio.run(handler(args))
+                    if inspect.iscoroutinefunction(handler):
+                        result_value = asyncio.run(handler(args))
+                    else:
+                        result_value = handler(args)
                 except Exception as exc:
                     logger.exception("MCP TOOL exception tool=%s", name)
                     return _rpc_error(
@@ -243,3 +259,8 @@ class McpHttpView(View):
             reset_context(ctx_token)
             duration = (time.perf_counter() - started) * 1000
             logger.info("MCP RESP method=%s duration_ms=%.2f", method, duration)
+
+
+# Backstop for any remaining linter complaints about unused asyncio import in
+# pure-sync test paths — asyncio.run is the dispatch path for async tools.
+_ = asyncio

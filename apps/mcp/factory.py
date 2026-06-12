@@ -1,7 +1,10 @@
 """Auto-derive MCP tools from a CRUDView's existing configuration.
 
 The factory walks `view_cls.actions` (filtered by `view_cls.mcp_actions` if
-set) and emits one async tool per action. Each tool reuses the same helpers
+set) and emits one tool per action. Handlers are sync because they call the
+Django ORM directly; the dispatcher in views.py supports both sync and
+async handlers, so cross-cutting tools added via @tool can still be async.
+Each tool reuses the same helpers
 the REST API uses (serialize, apply_search, apply_filters, apply_ordering),
 calls the CRUDView's tenancy hook (get_list_queryset), and respects the
 existing form-based create/update path including `on_form_valid` side
@@ -139,7 +142,7 @@ def _build_form_input_schema(view_cls, *, include_pk: bool = False) -> dict[str,
 def _build_list_tool(view_cls, *, base: str, description: str):
     name = f"list_{base}"
 
-    async def handler(args: dict[str, Any]):
+    def handler(args: dict[str, Any]):
         ctx = current_context()
         request = _fake_request(ctx.user)
 
@@ -193,7 +196,7 @@ def _build_list_tool(view_cls, *, base: str, description: str):
 def _build_get_tool(view_cls, *, singular: str, description: str):
     name = f"get_{singular}"
 
-    async def handler(args: dict[str, Any]):
+    def handler(args: dict[str, Any]):
         ctx = current_context()
         request = _fake_request(ctx.user)
         qs = view_cls._get_queryset()
@@ -223,7 +226,7 @@ def _build_get_tool(view_cls, *, singular: str, description: str):
 def _build_create_tool(view_cls, *, singular: str, description: str):
     name = f"create_{singular}"
 
-    async def handler(args: dict[str, Any]):
+    def handler(args: dict[str, Any]):
         ctx = current_context()
         request = _fake_request(ctx.user)
         form_class = view_cls.form_class or (
@@ -249,7 +252,7 @@ def _build_create_tool(view_cls, *, singular: str, description: str):
 def _build_update_tool(view_cls, *, singular: str, description: str):
     name = f"update_{singular}"
 
-    async def handler(args: dict[str, Any]):
+    def handler(args: dict[str, Any]):
         ctx = current_context()
         request = _fake_request(ctx.user)
         pk = args.get("pk")
@@ -301,7 +304,7 @@ def _build_update_tool(view_cls, *, singular: str, description: str):
 def _build_delete_tool(view_cls, *, singular: str, description: str):
     name = f"delete_{singular}"
 
-    async def handler(args: dict[str, Any]):
+    def handler(args: dict[str, Any]):
         ctx = current_context()
         request = _fake_request(ctx.user)
         pk = args.get("pk")

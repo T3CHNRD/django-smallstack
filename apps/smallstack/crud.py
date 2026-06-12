@@ -1377,6 +1377,8 @@ class CRUDView:
         if cls.related_tabs is False:
             return []
 
+        from django.urls import NoReverseMatch
+
         tabs = []
         for rel in cls.model._meta.get_fields():
             if not rel.one_to_many:
@@ -1384,6 +1386,14 @@ class CRUDView:
             related_model = rel.related_model
             related_crud = CRUDView._registry.get(related_model)
             if not related_crud:
+                continue
+            # Skip registry entries whose URLs aren't wired (e.g. CRUDViews
+            # defined only for MCP exposure, or test-only subclasses). They
+            # belong in `_registry` for the MCP factory, but they don't have
+            # HTML pages to deep-link to.
+            try:
+                related_crud._reverse(f"{related_crud._get_url_base()}-list")
+            except NoReverseMatch:
                 continue
             accessor = rel.get_accessor_name()
             # Find the FK field name on the related model
