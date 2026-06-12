@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.heartbeat",
     "apps.usermanager",
     "apps.website",  # Project-specific pages (customize freely)
+    "apps.mcp",  # Model Context Protocol server for AI clients
     # Django built-in apps
     "django.contrib.admin",
     "django.contrib.auth",
