@@ -118,34 +118,71 @@ class Command(BaseCommand):
             "detail": f"{len(names)} tools registered",
             "tools": names[:20],
         }
-        # If the registry is empty but the tree contains `enable_mcp = True`
-        # somewhere, that's almost certainly the import-ordering footgun —
-        # downgrade to WARN with the fix.
-        if not names:
-            orphans = self._scan_for_enable_mcp_optins()
-            if orphans:
-                preview = ", ".join(orphans[:3]) + ("…" if len(orphans) > 3 else "")
-                entry["status"] = "WARN"
-                entry["detail"] = (
-                    f"Registry empty but found `enable_mcp = True` in {len(orphans)} file(s): {preview}. "
-                    "Likely cause: the file isn't imported during app startup. "
-                    "Verify MCP_AUTODISCOVER is True (default), or add "
-                    "`from . import views` to that app's AppConfig.ready()."
+        # Always compare files with `enable_mcp = True` against the source
+        # files of registered CRUDViews. Any file with the marker that
+        # ISN'T represented in the registry is an orphan — either the
+        # whole app missed the autodiscover net, or a single CRUDView in
+        # a mixed file got skipped. Both cases warrant a WARN.
+        unregistered = self._find_unregistered_optins()
+        if unregistered:
+            preview = ", ".join(unregistered[:3]) + ("…" if len(unregistered) > 3 else "")
+            entry["status"] = "WARN"
+            if not names:
+                lead = f"Registry empty but found `enable_mcp = True` in {len(unregistered)} file(s): {preview}."
+            else:
+                lead = (
+                    f"{len(names)} tools registered, but {len(unregistered)} file(s) "
+                    f"with `enable_mcp = True` aren't represented: {preview}."
                 )
-                entry["orphans"] = orphans
+            entry["detail"] = (
+                f"{lead} "
+                "First check MCP_AUTODISCOVER is True (the default). If it is, the "
+                "CRUDView's module isn't covered by autodiscover (views.py / "
+                "mcp_tools.py) — add `from . import <module>` to that app's "
+                "AppConfig.ready()."
+            )
+            entry["orphans"] = unregistered
         report.append(entry)
 
-    def _scan_for_enable_mcp_optins(self) -> list[str]:
-        """Return repo-relative paths of .py files containing the literal
-        ``enable_mcp = True`` outside tests/migrations. Used to warn the
-        operator when the registry is empty but they almost certainly
-        meant to register tools."""
+    def _find_unregistered_optins(self) -> list[str]:
+        """Return display paths of .py files whose `enable_mcp = True`
+        CRUDViews aren't registered. Compares scan results against the
+        source files of every registered CRUDView."""
+        import inspect
+        from pathlib import Path
+
+        from apps.smallstack.crud import CRUDView
+
+        scanned = self._scan_for_enable_mcp_optins()
+        if not scanned:
+            return []
+
+        registered_paths: set[Path] = set()
+        for view_cls in CRUDView._registry.values():
+            if not getattr(view_cls, "enable_mcp", False):
+                continue
+            try:
+                registered_paths.add(Path(inspect.getfile(view_cls)).resolve())
+            except (TypeError, OSError):
+                continue
+
+        return sorted(
+            display
+            for absolute, display in scanned
+            if absolute.resolve() not in registered_paths
+        )
+
+    def _scan_for_enable_mcp_optins(self) -> list[tuple]:
+        """Return (absolute_path, display_path) tuples for every .py file
+        in an installed app containing `enable_mcp = True`, excluding
+        tests/ and migrations/. Used by _find_unregistered_optins to
+        diff against the registered CRUDView source files."""
         from pathlib import Path
 
         from django.apps import apps as django_apps
 
         marker = "enable_mcp = True"
-        hits: list[str] = []
+        hits: list[tuple] = []
         for app_config in django_apps.get_app_configs():
             if app_config.label == "mcp_server":
                 continue
@@ -160,12 +197,13 @@ class Command(BaseCommand):
                 try:
                     if marker in py_file.read_text(encoding="utf-8", errors="ignore"):
                         try:
-                            hits.append(str(py_file.relative_to(app_path.parent)))
+                            display = str(py_file.relative_to(app_path.parent))
                         except ValueError:
-                            hits.append(str(py_file))
+                            display = str(py_file)
+                        hits.append((py_file, display))
                 except OSError:
                     continue
-        return sorted(hits)
+        return sorted(hits, key=lambda t: t[1])
 
     def _check_urls(self, report):
         wanted = [
