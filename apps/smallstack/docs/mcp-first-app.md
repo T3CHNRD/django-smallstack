@@ -117,7 +117,7 @@ class TicketCRUDView(CRUDView):
 # config/settings/base.py
 INSTALLED_APPS = [
     # ...
-    "apps.ticketing",   # MUST come before "apps.mcp"
+    "apps.ticketing",
     "apps.mcp",
     # ...
 ]
@@ -125,7 +125,9 @@ INSTALLED_APPS = [
 
 That's it for wiring. `MCP_AUTODISCOVER` (default True) imports `apps/ticketing/views.py` at startup, which triggers `CRUDView.__init_subclass__` for both classes, which registers them — the factory runs right after and emits 7 MCP tools.
 
-If your CRUDViews lived in a non-conventional module (e.g. `apps/ticketing/crud.py`), add a `ready()` import in `apps/ticketing/apps.py`:
+**Order in `INSTALLED_APPS` is irrelevant** when your CRUDViews live in `views.py` or `mcp_tools.py` — `apps.mcp.ready()` walks every installed app's modules itself, so it doesn't matter who appears first. Order *only* matters if you import the CRUDView from your own app's `ready()` (see next paragraph), because then *your* `ready()` must run before MCP's.
+
+If your CRUDViews lived in a non-conventional module (e.g. `apps/ticketing/crud.py`), add a `ready()` import in `apps/ticketing/apps.py` AND list your app before `apps.mcp` in `INSTALLED_APPS`:
 
 ```python
 class TicketingConfig(AppConfig):

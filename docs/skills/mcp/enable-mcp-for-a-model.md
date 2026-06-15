@@ -33,9 +33,12 @@ That's the whole opt-in. The factory does the rest at app startup.
            from . import crud   # any module that defines the CRUDView
    ```
 
-Either way, **the app must precede `apps.mcp` in `INSTALLED_APPS`** so its `ready()` runs first.
+**INSTALLED_APPS order:**
 
-If you set `enable_mcp = True` and `mcp_doctor` shows the registry empty, it now WARNs with the orphan file and a one-line fix — but the autodiscover step makes this rare in practice.
+- Path 1 (default — views.py / mcp_tools.py): order doesn't matter. `apps.mcp.ready()` walks every installed app and imports those modules itself, so it's symmetric.
+- Path 2 (explicit `from . import crud` in your `ready()`): your app must precede `apps.mcp` in `INSTALLED_APPS`, otherwise MCP's `ready()` walks the registry before yours has populated it.
+
+If you set `enable_mcp = True` and `mcp_doctor` shows registry-empty or a partial-orphan WARN, it surfaces the offending file and the fix — autodiscover makes that rare in practice.
 
 ## Filtering
 
@@ -86,13 +89,13 @@ class TechnicianCRUDView(CRUDView):
 
 ## Tool naming
 
-| Tool | When | Default name |
+| Tool | When | Noun (resolution order, first non-empty wins) |
 |---|---|---|
-| `list_<plural>` | `Action.LIST` in `actions` | `url_base` or `verbose_name_plural` |
-| `get_<singular>` | `Action.DETAIL` | `verbose_name` |
-| `create_<singular>` | `Action.CREATE` | `verbose_name` |
-| `update_<singular>` | `Action.UPDATE` | `verbose_name` |
-| `delete_<singular>` | `Action.DELETE` | `verbose_name` |
+| `list_<plural>` | `Action.LIST` in `actions` | `mcp_plural` → `url_base` → `model._meta.verbose_name_plural` |
+| `get_<singular>` | `Action.DETAIL` | `mcp_singular` → `model._meta.verbose_name` |
+| `create_<singular>` | `Action.CREATE` | `mcp_singular` → `model._meta.verbose_name` |
+| `update_<singular>` | `Action.UPDATE` | `mcp_singular` → `model._meta.verbose_name` |
+| `delete_<singular>` | `Action.DELETE` | `mcp_singular` → `model._meta.verbose_name` |
 
 For a symmetric, custom name pair, set both:
 
