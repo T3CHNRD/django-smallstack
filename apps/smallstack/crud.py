@@ -1203,6 +1203,12 @@ class CRUDView:
     # Default is f"<verb> {mcp_description or model._meta.verbose_name}".
     # Example: {Action.CREATE: "File a brand-new support ticket."}
     mcp_descriptions: dict | None = None
+    # Override the noun used in MCP tool names. Defaults keep upstream
+    # behaviour: list_<url_base or verbose_name_plural>, get_/create_/
+    # update_/delete_<verbose_name>. Set both for a consistent, custom
+    # name pair like ("ticket", "tickets") → list_tickets + get_ticket.
+    mcp_singular: str | None = None
+    mcp_plural: str | None = None
 
     # Related object tabs (reverse FK relations on detail page)
     related_tabs = None  # None=auto-discover, list=explicit accessor names, False=disabled

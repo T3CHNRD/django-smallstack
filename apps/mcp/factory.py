@@ -378,9 +378,19 @@ def register_mcp_tools_from_crudview(view_cls) -> list[str]:
     if view_cls.model is None:
         return []
 
-    base = view_cls.url_base or view_cls.model._meta.model_name
-    base = str(base).replace("/", "_").replace("-", "_")
-    singular = view_cls.model._meta.verbose_name.lower().replace(" ", "_").replace("-", "_")
+    def _slug(value) -> str:
+        return str(value).lower().replace(" ", "_").replace("/", "_").replace("-", "_")
+
+    # Naming: explicit mcp_plural/mcp_singular win; otherwise fall back to the
+    # historical defaults (url_base for the list verb, verbose_name for the
+    # singular verbs). Keeping the fallback in place means existing CRUDViews
+    # produce the same tool names they did before this knob existed.
+    base = _slug(
+        view_cls.mcp_plural
+        or view_cls.url_base
+        or view_cls.model._meta.verbose_name_plural
+    )
+    singular = _slug(view_cls.mcp_singular or view_cls.model._meta.verbose_name)
 
     selected = view_cls.mcp_actions if view_cls.mcp_actions is not None else view_cls.actions
     selected_set = set(selected)

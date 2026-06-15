@@ -153,6 +153,46 @@ def test_fk_expansion_via_api_expand_fields(widget_view, user_a, readonly_token)
     assert owner["name"] == str(user_a)
 
 
+def test_mcp_singular_plural_overrides(widget_view):
+    """Setting mcp_singular + mcp_plural gives consistent tool names
+    regardless of model.verbose_name or url_base."""
+
+    class _Renamed(widget_view):
+        url_base = "anything_else"
+        mcp_singular = "ticket"
+        mcp_plural = "tickets"
+
+    register_mcp_tools_from_crudview(_Renamed)
+    assert "list_tickets" in TOOL_REGISTRY
+    assert "get_ticket" in TOOL_REGISTRY
+    assert "create_ticket" in TOOL_REGISTRY
+    assert "update_ticket" in TOOL_REGISTRY
+    assert "delete_ticket" in TOOL_REGISTRY
+
+
+def test_default_naming_unchanged_when_no_overrides(widget_view):
+    """Without mcp_singular/mcp_plural, factory matches pre-P23 behaviour:
+    list_<url_base>, get_<verbose_name>. WidgetCRUDView has url_base
+    'widgets' and model.verbose_name 'widget', so the names are
+    list_widgets + get_widget."""
+    register_mcp_tools_from_crudview(widget_view)
+    assert "list_widgets" in TOOL_REGISTRY
+    assert "get_widget" in TOOL_REGISTRY
+
+
+def test_mcp_plural_alone_uses_verbose_name_for_singular(widget_view):
+    """Setting only mcp_plural doesn't change the singular tools."""
+
+    class _OnlyPlural(widget_view):
+        url_base = "raw"
+        mcp_plural = "items"
+        mcp_singular = None  # keep default
+
+    register_mcp_tools_from_crudview(_OnlyPlural)
+    assert "list_items" in TOOL_REGISTRY
+    assert "get_widget" in TOOL_REGISTRY  # falls back to verbose_name
+
+
 def test_no_expand_keeps_fk_as_bare_pk(widget_view, user_a, readonly_token):
     """Sanity check: a CRUDView WITHOUT api_expand_fields still emits
     FKs as bare PKs (the existing default behaviour). Backwards-compat."""
