@@ -164,6 +164,15 @@ If Swagger UI or ReDoc shows a blank white page:
 3. **Check the spec URL** — Visit `/api/schema/openapi.json` directly. If it returns valid JSON, the spec is fine.
 4. **Django Debug Toolbar** — If enabled, the toolbar can interfere with standalone HTML pages. The debug toolbar is configured to skip `/api/docs/` and `/api/redoc/` paths, but if you're still having issues, verify the `SHOW_TOOLBAR_CALLBACK` in `config/settings/development.py`.
 
+## Schema Validity in CI
+
+The OpenAPI spec served at `/api/schema/openapi.json` is validated against the official OpenAPI 3.0.3 schema on every test run. The test lives at `apps/smallstack/test_openapi_validity.py` and runs the canonical `openapi-spec-validator` (a dev-extras dependency) against both:
+
+1. The output of `build_openapi_spec()` directly — catches builder bugs without HTTP.
+2. The live endpoint response — catches serializer bugs and view-level regressions.
+
+If you add a CRUDView, change an admin's `fields`, or rewrite the OpenAPI builder, this test surfaces any schema breakage *before* Swagger UI silently renders garbage in production. The validator catches everything from missing required keys to malformed `$ref` paths to invalid type names.
+
 ## Smoke-Testing the API
 
 To verify the API surface end-to-end against a running server (not the in-process test client):

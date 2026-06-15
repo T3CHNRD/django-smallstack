@@ -222,6 +222,17 @@ Import the spec URL directly:
 2. Enter `http://localhost:8005/api/schema/openapi.json`
 3. All endpoints are imported with parameters, request bodies, and auth headers
 
+## Spec Validity Gate
+
+`apps/smallstack/test_openapi_validity.py` runs `openapi-spec-validator` against both `build_openapi_spec()` and the live `/api/schema/openapi.json` endpoint on every test run. The spec MUST stay valid OpenAPI 3.0.3 — Swagger UI silently renders garbage if it isn't, so this test is the only thing standing between "Swagger looks fine in dev" and "Swagger shows a blank page in prod."
+
+If you touch any of these and the test fails, that's the regression:
+- `apps/smallstack/openapi.py` (the builder)
+- `apps/smallstack/api.py:api_openapi_schema` (the view)
+- Any CRUDView attribute that participates in schema generation (`fields`, `list_fields`, `filter_fields`, `api_extra_fields`, etc.)
+
+The validator catches missing required keys, malformed `$ref` paths, unknown type names, empty operations, and most other structural issues. Read its output as "the spec is broken in this specific way," not "the tests are flaky."
+
 ## Smoke-Testing the API
 
 When you need to verify the API is actually serving from a running server (not just that `pytest` passes against the test client), use `make api-test`:
