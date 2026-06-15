@@ -172,3 +172,10 @@ MCP_VERBOSE_LOGGING = config("MCP_VERBOSE_LOGGING", default=False, cast=bool)
 # self-register against the singleton server. Derived projects add their
 # own curated cross-cutting tools here.
 MCP_TOOL_MODULES: list[str] = []  # e.g. ["apps.mcp_tools.summary"]
+
+# Auto-import every app's views.py + mcp_tools.py at startup so CRUDViews
+# defined there register before the factory walks the registry. Mirrors
+# Django's admin.autodiscover pattern. Disable if your project hits
+# circular imports — but then every app with enable_mcp=True must
+# explicitly `from . import views` in its AppConfig.ready().
+MCP_AUTODISCOVER = config("MCP_AUTODISCOVER", default=True, cast=bool)
