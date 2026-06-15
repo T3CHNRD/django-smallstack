@@ -1,7 +1,7 @@
 # Makefile for Django SmallStack
 # Run 'make help' to see available commands
 
-.PHONY: help run migrate migrations superuser shell test coverage collectstatic docker-up docker-down lint clean deploy logs backup screenshot-auth optimize-images
+.PHONY: help run migrate migrations superuser shell test coverage collectstatic docker-up docker-down lint clean deploy logs backup screenshot-auth optimize-images mcp-doctor mcp-test
 
 # Default port for development server
 PORT ?= 8005
@@ -20,6 +20,8 @@ help:
 	@echo "  make docker-up    - Start Docker containers"
 	@echo "  make docker-down  - Stop Docker containers"
 	@echo "  make backup       - Create a database backup"
+	@echo "  make mcp-doctor   - Diagnose the MCP server (settings, URLs, registry, self-test)"
+	@echo "  make mcp-test     - End-to-end MCP smoke test (requires \`make run\` in another shell)"
 	@echo "  make lint         - Run ruff linter"
 	@echo "  make screenshot-auth - Generate shot-scraper auth JSON"
 	@echo "  make optimize-images - Optimize PNG images with pngquant"
@@ -66,6 +68,14 @@ docker-down:
 
 backup:
 	uv run python manage.py backup_db
+
+# MCP diagnostics. mcp-doctor is offline (in-process self-test); mcp-test
+# hits a real HTTP server, so the server must be running in another shell.
+mcp-doctor:
+	uv run python manage.py mcp_doctor
+
+mcp-test:
+	uv run python manage.py mcp_smoke --url http://localhost:$(PORT)/mcp
 
 screenshot-auth:
 	@uv run python manage.py screenshot_auth 2>/dev/null

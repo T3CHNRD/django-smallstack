@@ -16,6 +16,16 @@ Flags:
 - `--check-only` — exit 1 on any FAIL (useful in CI)
 - `--explain [TOOL]` — dump descriptions + `inputSchema` for every registered tool (or just one). Useful for the "Claude doesn't know it can filter by status" class of issues.
 
+The doctor's self-test runs through Django's test client (in-process), so it won't catch reverse-proxy bugs, port conflicts, WSGI quirks, or middleware that strips headers. For that, use `make mcp-test` against a live server:
+
+```bash
+make run             # in one terminal
+make mcp-test        # in another — mints a temp token, hits real /mcp,
+                     # runs tools/list + tools/call, revokes the token
+```
+
+Exits 2 if the server isn't reachable (so CI can distinguish "broken deploy" from "wrong test config"), 4 on any JSON-RPC error, 0 on success. Wraps `manage.py mcp_smoke`; pass `--url`, `--user`, `--tool`, `--json`, or `--quiet` directly to that command if you need more control than the Makefile target gives you.
+
 ## Step 2 — inspect what the LLM sees
 
 When a tool exists but the LLM is calling it wrong (or won't call it at all), the next stop is the tool's description + input schema. That's what Claude reads from `tools/list`. The `--explain` flag dumps it without needing a running server:

@@ -11,6 +11,7 @@ SmallStack ships an MCP server at `/mcp` so AI clients (Claude Desktop, Claude.a
 - `@tool` decorator for adding curated cross-cutting tools that wrap aggregation or lookups an LLM would otherwise need many CRUD calls for
 - Bearer-only auth (session cookies are deliberately rejected)
 - `python manage.py mcp_doctor` for diagnostics (and `mcp_doctor --explain` to dump tool schemas — the same thing the LLM sees from `tools/list`)
+- `make mcp-test` for an end-to-end HTTP smoke test against a running dev server (mint → tools/list → tools/call → revoke)
 
 ## First connection (smoke test)
 

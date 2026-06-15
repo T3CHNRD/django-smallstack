@@ -173,31 +173,29 @@ uv run python manage.py create_api_token admin --name dev --access-level readonl
 TOKEN="<paste here>"
 ```
 
-## 8. List the tools
+## 8. Smoke-test the live server
+
+In another terminal:
 
 ```bash
-uv run python manage.py runserver 8005 &   # in another terminal
-
-curl -s -X POST http://localhost:8005/mcp \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools[].name'
+make run             # starts the dev server on :8005
 ```
 
-Should print:
-```
-"list_customers"
-"get_customer"
-"list_tickets"
-"get_ticket"
-"create_ticket"
-"update_ticket"
-"delete_ticket"
-```
-
-## 9. Call one with a filter
+Back in your first terminal:
 
 ```bash
+make mcp-test
+```
+
+This mints a temp readonly token, hits `/mcp` for real (not the in-process test client), runs `tools/list` + a sample `tools/call`, then revokes the token. You should see `[✓] tools/list` and `[✓] tools/call list_customers` then `Result: PASS`. Exits 0 on success, 2 on connection failure, 4 on any RPC error.
+
+## 9. Call a tool with a filter (curl)
+
+For surgical testing — e.g. "does my `filter_fields = ["status", "priority"]` actually work?" — you can hand-craft the JSON-RPC request:
+
+```bash
+TOKEN=$(uv run python manage.py create_api_token admin --name dev --access-level readonly | awk 'NR==4{print $1}')
+
 curl -s -X POST http://localhost:8005/mcp \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \

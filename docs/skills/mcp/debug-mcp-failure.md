@@ -12,6 +12,8 @@ A client (Claude Desktop, Claude.ai, custom) is failing to attach to `/mcp` or a
    - Description is the bare model name → set `mcp_description` to a sentence the LLM can match against.
    - Read tool incorrectly marked `write: True` (or vice-versa) → check the decorator / `Action` mapping.
 
+   **Doctor passes but real HTTP calls fail?** → `make mcp-test` runs the same mint → tools/list → tools/call → revoke loop against a live server (not the in-process test client). Catches reverse-proxy bugs, port collisions, header-stripping middleware, and CSP changes that wouldn't show up in the doctor's in-process self-test. Exits 2 on connection failure, 4 on JSON-RPC error.
+
 2. **Client says "couldn't connect", no log lines** → the GET banner is reachable, but POST isn't. Three usual causes:
    - APPEND_SLASH redirected POST to GET. Both `/mcp` and `/mcp/` must accept POST. Check `apps/mcp/urls.py` — it should mount the same view twice.
    - Bad `protocolVersion` on `initialize`. Check `MCP_SUPPORTED_PROTOCOL_VERSIONS` is populated; the dispatcher echoes the client's value if supported, else falls back to the first entry.

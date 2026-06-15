@@ -52,7 +52,14 @@ The user wants to validate the MCP server from a real client.
 ## Validating end-to-end
 
 ```bash
-# tools/list with the token
+make mcp-test
+```
+
+This mints a temporary readonly token, hits the running `/mcp` endpoint with `tools/list` + a sample `tools/call`, then revokes the token. Exits 0 on success, 2 on connection failure, 4 on any JSON-RPC error.
+
+If you need the raw curl form (e.g. inside a one-off script), it's:
+
+```bash
 curl -s -X POST http://localhost:8005/mcp \
   -H "Authorization: Bearer <key>" \
   -H "Content-Type: application/json" \
