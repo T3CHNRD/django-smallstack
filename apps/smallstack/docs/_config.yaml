@@ -358,6 +358,12 @@ pages:
     icon: "ai"
     category: "MCP (AI)"
 
+  - slug: mcp-first-app
+    title: "Your First MCP App in 10 Minutes"
+    description: "Linear walkthrough: startapp → models → CRUDView → seed → curl → Claude Desktop"
+    icon: "rocket"
+    category: "MCP (AI)"
+
   - slug: mcp-enable-models
     title: "Enable MCP for a CRUDView"
     description: "Opt a CRUDView into the MCP factory's auto-derived tool surface"
