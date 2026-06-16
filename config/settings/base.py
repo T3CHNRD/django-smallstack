@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.usermanager",
     "apps.website",  # Project-specific pages (customize freely)
     "apps.mcp",  # Model Context Protocol server for AI clients
+    "apps.tokenmgr",  # User-facing UI for API token management
     # Django built-in apps
     "django.contrib.admin",
     "django.contrib.auth",
