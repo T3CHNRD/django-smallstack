@@ -13,19 +13,41 @@ class TestWebsiteViews:
         assert response.status_code == 200
         assert b"SmallStack" in response.content
 
-    def test_home_page_feature_cards(self, client):
-        """Feature cards should render with doc links."""
+    def test_home_page_hero(self, client):
+        """Hero tagline + four-shapes framing should render."""
         response = client.get("/")
         content = response.content.decode()
-        assert "feature-card" in content
-        assert "Read docs" in content
+        assert "batteries-included" in content
+        assert "scheduler systems" in content
+        assert "MCP servers" in content
 
-    def test_home_page_customize_banner(self, client):
-        """Customize banner should appear on home page."""
+    def test_home_page_pipeline_section(self, client):
+        """The model-to-three-surfaces pipeline is the page's centerpiece."""
         response = client.get("/")
         content = response.content.decode()
-        assert "Make it yours" in content
-        assert "customization" in content
+        assert "One model" in content
+        assert "Three surfaces" in content
+        assert "TicketCRUDView" in content
+        assert "enable_mcp" in content
+
+    def test_home_page_batteries_grid(self, client):
+        """Batteries-included grid should name the built-in apps."""
+        response = client.get("/")
+        content = response.content.decode()
+        assert "Explorer" in content
+        assert "MCP admin" in content
+        assert "Activity" in content
+        assert "API Tokens" in content
+        assert "Backups" in content
+
+    def test_home_page_doc_links_for_anon(self, client):
+        """Anonymous visitors get doc-page links into the smallstack help section."""
+        response = client.get("/")
+        content = response.content.decode()
+        # Anon users see help-page deep links rather than live admin URLs.
+        assert "/smallstack/help/smallstack/mcp-first-app/" in content
+        assert "/smallstack/help/smallstack/building-crud-pages/" in content
+        assert "/smallstack/help/smallstack/api-documentation/" in content
 
     def test_about_page(self, client):
         response = client.get("/about/")
@@ -56,32 +78,42 @@ class TestWebsiteViews:
 @pytest.mark.starter_content
 @pytest.mark.django_db
 class TestHomePageAuthenticated:
-    """Test home page with authenticated user."""
+    """Home page adapts to auth + staff state."""
 
     @pytest.fixture
     def staff_user(self, django_user_model):
         return django_user_model.objects.create_user(username="staff", password="testpass", is_staff=True)
 
-    def test_quick_links_for_staff(self, client, staff_user):
-        """Staff users should see all quick links including built-in apps."""
+    def test_staff_sees_live_app_links(self, client, staff_user):
+        """Staff users get live links into the built-in admin apps."""
         client.force_login(staff_user)
         response = client.get("/")
         content = response.content.decode()
-        assert "quick-link" in content
-        assert "Explorer" in content
-        assert "Activity" in content
-        assert "Status" in content
-        assert "Backups" in content
-        assert "Dashboard" in content
-        assert "Users" in content
+        # Live admin URLs (vs the doc deep-links shown to anonymous visitors).
+        assert "/smallstack/explorer/" in content
+        assert "/smallstack/mcp/" in content
+        assert "/smallstack/activity/" in content
+        assert "/smallstack/tokens/" in content
+        assert "/smallstack/backups/" in content
+        # Staff get the Dashboard CTA.
+        assert "Open Dashboard" in content
 
-    def test_quick_links_for_regular_user(self, client, django_user_model):
-        """Regular users should see basic quick links only."""
+    def test_anonymous_sees_signup_cta(self, client):
+        """Anonymous users get the Sign Up CTA, not Dashboard."""
+        response = client.get("/")
+        content = response.content.decode()
+        assert "Get Started" in content
+        assert "Open Dashboard" not in content
+
+    def test_regular_user_sees_anon_style_links(self, client, django_user_model):
+        """Non-staff authed users get the same doc-page links as anonymous."""
         user = django_user_model.objects.create_user(username="regular", password="testpass")
         client.force_login(user)
         response = client.get("/")
         content = response.content.decode()
-        assert "My Profile" in content
-        assert "Help & Docs" in content
-        # Staff-only links should not appear
-        assert "Admin Panel" not in content
+        # No live admin links for non-staff (the example URL in the code
+        # block is a span, not an anchor — match the href shape).
+        assert 'href="/smallstack/explorer/"' not in content
+        assert 'href="/smallstack/tokens/"' not in content
+        # But doc deep-links are present.
+        assert "/smallstack/help/smallstack/explorer/" in content

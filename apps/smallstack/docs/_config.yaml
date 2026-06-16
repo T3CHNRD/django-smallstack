@@ -215,6 +215,12 @@ pages:
     icon: "email"
     category: "Auth & Users"
 
+  - slug: api-tokens
+    title: "API Tokens"
+    description: "Self-service mint / view / revoke at /smallstack/tokens/ — permissions matrix, reveal flow, MCP integration"
+    icon: "key"
+    category: "Auth & Users"
+
   - slug: explorer
     title: "Model Explorer"
     description: "Staff-facing data browser with auto-generated CRUD from your admin registrations"

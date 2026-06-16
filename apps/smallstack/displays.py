@@ -38,10 +38,17 @@ def paginate_queryset(queryset, paginate_by, request):
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
 
-    # SmallStack pagination display helpers
+    # SmallStack pagination display helpers — keep parity with the
+    # other two pagination call sites (crud.py legacy path,
+    # pagination.paginate_queryset) so every list-render gets the same
+    # four attributes. list-cast the elided range so it's re-iterable
+    # (Paginator.get_elided_page_range returns a one-shot generator).
     page_obj.showing_start = page_obj.start_index()
     page_obj.showing_end = page_obj.end_index()
     page_obj.total_count = paginator.count
+    page_obj.page_range_display = list(
+        paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
+    )
 
     return {
         "object_list": page_obj.object_list,

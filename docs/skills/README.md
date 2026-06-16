@@ -23,6 +23,7 @@ When an AI agent is asked to modify or extend this project, these files help it:
 | [adding-your-own-theme.md](adding-your-own-theme.md) | Adding a custom CSS framework alongside SmallStack's built-in theme |
 | [theme-scenarios.md](theme-scenarios.md) | Three theme integration scenarios: public-only, user login, or build on SmallStack |
 | [authentication.md](authentication.md) | Custom user model, auth views, protecting views |
+| [manage-api-tokens.md](manage-api-tokens.md) | Pick the right token surface (/smallstack/tokens/, CLI, OAuth) by question; permissions matrix; reveal-once flow |
 | [htmx-patterns.md](htmx-patterns.md) | htmx setup, CSRF, partials, dual-response views, OOB messages |
 | [help-documentation.md](help-documentation.md) | Help system, sections, bundled SmallStack docs |
 | [settings.md](settings.md) | Split settings, environment variables, feature flags |
@@ -71,6 +72,7 @@ AI agents should read relevant skill files before making changes to the correspo
 - Before adding a custom theme (Bootstrap, Tailwind, etc.) → read `adding-your-own-theme.md`
 - Before deciding which theme approach to take → read `theme-scenarios.md`
 - Before working with auth → read `authentication.md`
+- Before answering an API-token question (mint, revoke, where to look) → read `manage-api-tokens.md`
 - Before adding htmx interactions → read `htmx-patterns.md`
 - Before adding a help page → read `help-documentation.md`
 - Before changing settings → read `settings.md`

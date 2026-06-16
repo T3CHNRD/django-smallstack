@@ -490,8 +490,12 @@ class _CRUDListBase(_CRUDContextMixin, ListView):
                 page_obj.showing_start = page_obj.start_index()
                 page_obj.showing_end = page_obj.end_index()
                 page_obj.total_count = page_obj.paginator.count
-                page_obj.page_range_display = page_obj.paginator.get_elided_page_range(
-                    page_obj.number, on_each_side=2, on_ends=1
+                # list-cast: get_elided_page_range returns a one-shot
+                # generator, which silently empties on second iteration.
+                page_obj.page_range_display = list(
+                    page_obj.paginator.get_elided_page_range(
+                        page_obj.number, on_each_side=2, on_ends=1
+                    )
                 )
         return context
 
@@ -1150,7 +1154,8 @@ class CRUDView:
     model = None
     fields = None
     list_fields = None
-    list_columns = None  # Optional UI-only override: narrower column set for list template (API/CSV still use list_fields)
+    # UI-only override: narrower column set for list template. API/CSV still use list_fields.
+    list_columns = None
     detail_fields = None
     link_field = None
 

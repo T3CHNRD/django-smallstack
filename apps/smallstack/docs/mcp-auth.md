@@ -39,7 +39,12 @@ PKCE is S256-only. `plain` is rejected.
 
 ## Token management
 
-`APIToken` is registered with `explorer_enabled = True` so non-superuser staff can browse, audit, and revoke tokens from Explorer under **Auth → API tokens**. The OAuth consent page links to this page so users know where to revoke later.
+Two surfaces:
+
+- **`/smallstack/tokens/`** — self-service. Any authenticated user can list, mint (read-only), view, and revoke their own tokens. Staff sees all tokens. This is where the OAuth consent page sends users for post-grant management. See [`api-tokens.md`](api-tokens.md).
+- **`/explorer/auth/apitoken/`** — staff-only (via `APITokenAdmin.explorer_enabled = True`). Cross-user audit and bulk actions.
+
+OAuth-minted tokens (from the Claude.ai Connectors UI flow) show up immediately in both places. A user can revoke "their" Claude.ai token from `/smallstack/tokens/` without needing staff escalation — closing the UX gap that existed before tokenmgr landed.
 
 ## RFC discovery
 

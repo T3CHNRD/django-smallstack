@@ -36,4 +36,6 @@ urlpatterns = [
     path("", include("apps.explorer.urls")),
     # MCP admin pages (staff-only) — Health, Tools, Activity
     path("mcp/", include("apps.mcp.admin_urls")),
+    # Token manager (self-service + staff) — list, mint, reveal, revoke
+    path("", include("apps.tokenmgr.urls")),
 ]
