@@ -35,7 +35,12 @@ def paginate_queryset(queryset: Any, request: HttpRequest, page_size: int = 20, 
     page_obj.showing_start = page_obj.start_index()
     page_obj.showing_end = page_obj.end_index()
     page_obj.total_count = paginator.count
-    page_obj.page_range_display = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
+    # list-cast: get_elided_page_range returns a one-shot generator, which
+    # silently empties on second iteration. Materialize at attach time so
+    # any consumer can iterate page_range_display more than once.
+    page_obj.page_range_display = list(
+        paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
+    )
 
     return page_obj
 
