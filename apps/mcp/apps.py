@@ -53,7 +53,19 @@ class MCPConfig(AppConfig):
                 except Exception:
                     logger.exception("Failed to register MCP tools for %s", view_cls)
 
-        # Step 4: register the staff-only "MCP" sidebar entry. Lands users
+        # Step 4: register the at-a-glance dashboard widget so /smallstack/
+        # surfaces MCP next to Backups, Help, etc. Cheap — no DB hits or
+        # HTTP, just a registry count + the orphan-files heuristic.
+        try:
+            from apps.smallstack import dashboard
+
+            from .dashboard_widgets import MCPDashboardWidget
+
+            dashboard.register(MCPDashboardWidget())
+        except Exception:
+            logger.exception("Failed to register MCP dashboard widget")
+
+        # Step 5: register the staff-only "MCP" sidebar entry. Lands users
         # on the Health page; internal tabs surface Tools and Activity.
         try:
             from apps.smallstack.navigation import nav
