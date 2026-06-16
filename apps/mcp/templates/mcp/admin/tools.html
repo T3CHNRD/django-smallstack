@@ -7,8 +7,80 @@
   <h1 style="margin: 0 0 1rem 0;">MCP</h1>
   {% include "mcp/admin/_nav.html" %}
 
-  <p style="color: var(--body-quiet-color, #666); margin-bottom: 1rem;">
-    Coming soon — Phase 4 renders the registered MCP tool table here.
-  </p>
+  {% if not tools %}
+    <div style="
+      padding: 1.25rem;
+      background: var(--card-bg, #fff);
+      border: 1px dashed var(--border, #ddd);
+      border-radius: 8px;
+      color: var(--body-quiet-color, #666);
+    ">
+      <strong>No tools registered yet.</strong>
+      <p style="margin: 0.5rem 0 0 0;">
+        Opt a <code>CRUDView</code> in with <code>enable_mcp = True</code>, or
+        add a custom tool via <code>@tool</code> in an
+        <code>apps/&lt;your_app&gt;/mcp_tools.py</code>. See the
+        <a href="{% url 'help:section_detail' section='smallstack' slug='mcp-enable-models' %}">
+          enable-mcp-for-a-model
+        </a> doc for the one-line opt-in.
+      </p>
+    </div>
+  {% else %}
+    <div style="
+      margin-bottom: 0.75rem;
+      color: var(--body-quiet-color, #666);
+      font-size: 0.9rem;
+    ">
+      {{ tools|length }} tool{{ tools|pluralize }} registered. This is the
+      exact list <code>tools/list</code> returns to MCP clients.
+    </div>
+
+    <div style="
+      background: var(--card-bg, #fff);
+      border: 1px solid var(--border, #ddd);
+      border-radius: 8px;
+      overflow: hidden;
+    ">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: var(--table-header-bg, #f5f5f5); text-align: left;">
+            <th style="padding: 0.6rem 0.85rem; font-size: 0.85rem;">Name</th>
+            <th style="padding: 0.6rem 0.85rem; font-size: 0.85rem;">Description</th>
+            <th style="padding: 0.6rem 0.85rem; font-size: 0.85rem;">Write</th>
+            <th style="padding: 0.6rem 0.85rem; font-size: 0.85rem;">Access</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tool in tools %}
+            <tr style="border-top: 1px solid var(--border, #eee);">
+              <td style="padding: 0.6rem 0.85rem; font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem;">
+                <a href="{% url 'mcp_admin:tool_detail' name=tool.name %}">{{ tool.name }}</a>
+              </td>
+              <td style="padding: 0.6rem 0.85rem; font-size: 0.85rem; color: var(--body-fg, #333);">
+                {{ tool.description|default:""|truncatechars:90 }}
+              </td>
+              <td style="padding: 0.6rem 0.85rem; font-size: 0.85rem;">
+                {% if tool.write %}
+                  <span style="
+                    padding: 0.1rem 0.5rem;
+                    background: var(--warning-bg, #fff8e1);
+                    color: var(--warning-fg, #b78d05);
+                    border-radius: 999px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                  ">write</span>
+                {% else %}
+                  <span style="color: var(--body-quiet-color, #888);">—</span>
+                {% endif %}
+              </td>
+              <td style="padding: 0.6rem 0.85rem; font-size: 0.85rem; color: var(--body-quiet-color, #555);">
+                {{ tool.requires_access|default:"any" }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

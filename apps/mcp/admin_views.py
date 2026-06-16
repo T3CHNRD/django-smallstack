@@ -67,9 +67,13 @@ class MCPAdminToolsView(_AdminBase):
     template_name = "mcp/admin/tools.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        from apps.mcp.server import TOOL_REGISTRY
+
         ctx = super().get_context_data(**kwargs)
         ctx["page"] = "tools"
-        ctx["tools"] = []  # Phase 4 fills this in.
+        # Sort by name for predictable display. Browse-time only — the
+        # registry order at registration time is preserved upstream.
+        ctx["tools"] = sorted(TOOL_REGISTRY.values(), key=lambda t: t.name)
         return ctx
 
 
@@ -77,14 +81,25 @@ class MCPAdminToolDetailView(_AdminBase):
     template_name = "mcp/admin/tool_detail.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        ctx = super().get_context_data(**kwargs)
+        import json
+
         from apps.mcp.server import TOOL_REGISTRY
 
+        ctx = super().get_context_data(**kwargs)
         name = self.kwargs["name"]
         if name not in TOOL_REGISTRY:
             raise Http404(f"No MCP tool named {name!r}")
         ctx["page"] = "tools"  # keep "Tools" tab active
         ctx["tool"] = TOOL_REGISTRY[name]
+        # Pre-serialize the input schema so the template just prints it.
+        ctx["schema_json"] = json.dumps(TOOL_REGISTRY[name].input_schema, indent=2)
+        # Sample curl payload built from the tool's identity (we can't
+        # know the project's host or the user's token; placeholders are
+        # the honest answer).
+        ctx["curl_payload"] = json.dumps(
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+             "params": {"name": name, "arguments": {}}}
+        )
         return ctx
 
 
