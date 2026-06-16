@@ -1154,7 +1154,8 @@ class CRUDView:
     model = None
     fields = None
     list_fields = None
-    list_columns = None  # Optional UI-only override: narrower column set for list template (API/CSV still use list_fields)
+    # UI-only override: narrower column set for list template. API/CSV still use list_fields.
+    list_columns = None
     detail_fields = None
     link_field = None
 
