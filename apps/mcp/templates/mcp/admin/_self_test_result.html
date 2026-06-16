@@ -1,0 +1,27 @@
+{% comment %}
+htmx fragment swapped into #self-test-result on the Health page when
+the "Run self-test now" button is clicked. Renders the same row
+mcp_doctor would print in its CLI self-test, but as a small panel.
+{% endcomment %}
+<div id="self-test-result" style="
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: {% if entry.status == 'PASS' %}var(--success-bg, #e6f4ea){% else %}var(--error-bg, #fce8e6){% endif %};
+  color: {% if entry.status == 'PASS' %}var(--success-fg, #1e7e34){% else %}var(--error-fg, #c0392b){% endif %};
+  border-left: 4px solid {% if entry.status == 'PASS' %}var(--success-fg, #1e7e34){% else %}var(--error-fg, #c0392b){% endif %};
+  border-radius: 6px;
+">
+  <strong>Self-test {{ entry.status }}</strong>
+  {% if entry.detail|stringformat:"s"|slice:":1" == "{" %}
+    <ul style="margin: 0.4rem 0 0 1.25rem; padding: 0; font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem;">
+      {% for step, ok in entry.detail.items %}
+        <li>{{ step }}: {% if ok %}✓{% else %}✗{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div style="margin-top: 0.25rem; font-size: 0.9rem;">{{ entry.detail }}</div>
+  {% endif %}
+  <div style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.75;">
+    Token cleanup ran in a finally block — no APIToken was left active.
+  </div>
+</div>

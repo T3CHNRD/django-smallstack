@@ -106,13 +106,31 @@ class MCPAdminActivityView(_AdminBase):
 
 
 class MCPAdminSelfTestView(StaffRequiredMixin, View):
-    """POST-only endpoint for the "Run self-test now" button. Phase 3."""
+    """POST-only endpoint backing the "Run self-test now" button.
+
+    Triggers the same in-process self-test mcp_doctor runs at the end of
+    its CLI report — mints a temp APIToken, makes three test-client
+    JSON-RPC calls (tools/list, ping, notifications/initialized), then
+    revokes the token. Returns an htmx fragment for inline swap.
+    """
 
     http_method_names = ["post"]
 
     def post(self, request, *args, **kwargs):
-        # Phase 3 wires this up. For now keep the stub honest: return 200
-        # with a placeholder fragment so the htmx swap target gets cleared.
-        from django.http import HttpResponse
+        from django.shortcuts import render
 
-        return HttpResponse("<p>(self-test not yet implemented)</p>")
+        from apps.mcp.management.commands.mcp_doctor import Command
+
+        cmd = Command()
+        report: list[dict] = []
+        try:
+            cmd._self_test(report)
+        except Exception as exc:  # noqa: BLE001 — any failure becomes a FAIL row
+            report.append({"name": "Self-test", "status": "FAIL", "detail": str(exc)})
+
+        entry = report[0] if report else {"status": "FAIL", "detail": "self-test produced no result"}
+        return render(
+            request,
+            "mcp/admin/_self_test_result.html",
+            {"entry": entry},
+        )

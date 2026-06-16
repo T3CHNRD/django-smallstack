@@ -30,6 +30,43 @@
     </span>
   </div>
 
+  {# In-process self-test, gated to a button so it doesn't fire on every load. #}
+  <div style="
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--card-bg, #fff);
+    border: 1px dashed var(--border, #ddd);
+    border-radius: 8px;
+  ">
+    <div style="flex: 1;">
+      <strong>Self-test</strong>
+      <span style="color: var(--body-quiet-color, #666); font-size: 0.85rem;">
+        — mints a temp token, runs <code>tools/list</code> + <code>ping</code> + <code>notifications/initialized</code>, revokes.
+      </span>
+    </div>
+    <form method="post"
+          action="{% url 'mcp_admin:self_test' %}"
+          hx-post="{% url 'mcp_admin:self_test' %}"
+          hx-target="#self-test-result"
+          hx-swap="outerHTML"
+          style="margin: 0;">
+      {% csrf_token %}
+      <button type="submit" style="
+        padding: 0.45rem 1rem;
+        background: var(--primary, #0066cc);
+        color: #fff;
+        border: 1px solid var(--primary, #0066cc);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+      ">Run self-test now</button>
+    </form>
+  </div>
+  <div id="self-test-result"></div>
+
   {# One card per check entry. #}
   {% for entry in report %}
     {% if entry.status == "PASS" %}
