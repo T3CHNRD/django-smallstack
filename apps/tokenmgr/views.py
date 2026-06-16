@@ -80,6 +80,15 @@ class TokenCRUDView(CRUDView):
     def _get_template_names(cls, suffix):
         if suffix == "list":
             return ["tokenmgr/crud/apitoken_list.html"]
+        if suffix == "list_content":
+            # Toolbar HTMX (search / filter changes) returns just this
+            # fragment — replaces #crud-list-content innerHTML without
+            # re-rendering the page header, stat cards, or toolbar.
+            return ["tokenmgr/crud/apitoken_list_content.html"]
+        if suffix == "list_partial":
+            # Fallback when an HTMX request doesn't target the list-
+            # content div. Re-render the whole page block.
+            return ["tokenmgr/crud/apitoken_list.html"]
         if suffix == "detail":
             return ["tokenmgr/crud/apitoken_detail.html"]
         return super()._get_template_names(suffix)
