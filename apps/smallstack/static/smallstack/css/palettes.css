@@ -50,22 +50,29 @@ html[data-palette="django"][data-theme="dark"] {
     --link-hover: #6ee7b7;
     --breadcrumb-link: #e4e4e7;
 
-    /* Surfaces — same cool-biased near-black as the other dark palettes */
-    --body-bg: #0a0b0f;
-    --content-bg: #0a0b0f;
-    --header-bg: #111218;
-    --hero-gradient-end: #181a22;
-    --card-bg: #16181f;
-    --card-header-bg: #1d1f28;
-    --card-border: #262936;
-    --hairline-color: #262936;
-    --sidebar-bg: #0c0d12;
-    --sidebar-hover-bg: #16181f;
-    --sidebar-border: #262936;
-    --footer-bg: #0a0b0f;
+    /* Surfaces — pushed MORE cool than the dark-blue/purple/orange
+       palettes because emerald's complement (magenta/red) is exactly
+       what neutral grays drift toward via simultaneous contrast.
+       For blue/purple/orange palettes, a subtle R<G<B bias of 3-7
+       points was enough. For green, we need 10-15 points of blue lift
+       to keep surfaces reading cool instead of brown. The result
+       still passes as "neutral dark" in isolation but holds its
+       color when surrounded by emerald accents. */
+    --body-bg: #07080f;
+    --content-bg: #07080f;
+    --header-bg: #10131c;
+    --hero-gradient-end: #171a26;
+    --card-bg: #131722;
+    --card-header-bg: #1a1e2b;
+    --card-border: #232838;
+    --hairline-color: #232838;
+    --sidebar-bg: #090b13;
+    --sidebar-hover-bg: #131722;
+    --sidebar-border: #232838;
+    --footer-bg: #07080f;
     --footer-fg: #71717a;
-    --input-bg: #16181f;
-    --input-border: #3c3f4a;
+    --input-bg: #131722;
+    --input-border: #383c4c;
 
     /* Muted text — zinc family, readable on near-black */
     --text-muted: #a1a1aa;
