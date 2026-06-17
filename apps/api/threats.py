@@ -322,9 +322,8 @@ def detect_revoked_token_use(*, window_hours: int = 24) -> list[ThreatSignal]:
 def detect_axes_lockouts() -> list[ThreatSignal]:
     """IPs currently locked out by django-axes."""
     try:
-        from django.conf import settings
-
         from axes.models import AccessAttempt
+        from django.conf import settings
     except ImportError:
         return []
     failure_limit = getattr(settings, "AXES_FAILURE_LIMIT", 5)

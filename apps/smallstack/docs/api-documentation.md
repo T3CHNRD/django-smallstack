@@ -17,6 +17,8 @@ description: Interactive API docs with Swagger UI and ReDoc — no packages requ
 
 All three URLs are public — no authentication required to view the documentation. The spec is auto-generated from your registered CRUDView endpoints and auth endpoints.
 
+For a staff-facing health dashboard around the same API — health checks, per-endpoint activity, and threat signals — see [`/smallstack/api/`](api-doctor.md).
+
 ## How It Works
 
 Both Swagger UI and ReDoc load from CDN (no packages to install or vendor):

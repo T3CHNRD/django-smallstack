@@ -26,17 +26,23 @@ class APIDashboardWidget(DashboardWidget):
     url_name = "api_admin:health"
 
     def get_data(self, model_class=None) -> dict:
+        from apps.api.threats import count_high_severity_threats
         from apps.smallstack.api import _api_registry
 
         n = len(_api_registry)
         orphan_count = self._orphan_count()
+        threat_count = count_high_severity_threats(window_hours=24)
 
         if n == 0:
             headline = "No endpoints"
         else:
             headline = f"{n} endpoint{'s' if n != 1 else ''}"
 
-        if orphan_count:
+        # Priority: active threats > orphan files > empty registry > clean
+        if threat_count:
+            detail = f"{threat_count} high-severity threat{'s' if threat_count != 1 else ''}"
+            status = "degraded"
+        elif orphan_count:
             detail = f"{orphan_count} unregistered file{'s' if orphan_count != 1 else ''}"
             status = "degraded"
         elif n == 0:
@@ -50,11 +56,13 @@ class APIDashboardWidget(DashboardWidget):
 
     def get_api_extras(self, model_class=None) -> dict | None:
         """Richer payload for /api/dashboard/widgets/ consumers."""
+        from apps.api.threats import count_high_severity_threats
         from apps.smallstack.api import _api_registry
 
         return {
             "endpoint_count": len(_api_registry),
             "orphan_count": self._orphan_count(),
+            "high_severity_threats_24h": count_high_severity_threats(window_hours=24),
         }
 
     @staticmethod
