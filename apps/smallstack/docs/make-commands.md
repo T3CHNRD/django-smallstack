@@ -2,6 +2,8 @@
 
 SmallStack includes a `Makefile` that turns long, hard-to-remember commands into simple shortcuts. The goal is to make your developer experience easier and get you on a quicker path to success — you shouldn't have to memorize `uv run python manage.py runserver 0.0.0.0:8005` when `make run` does the same thing.
 
+> **Looking for `manage.py` commands and system tools too?** See [`cli-reference.md`](cli-reference.md) for the unified reference — every Make target, every `manage.py` command, and every system tool with options, examples, and when-to-use guidance.
+
 ## What is Make?
 
 `make` is a task runner that ships with macOS and Linux. It reads a `Makefile` in your project root and maps short names to shell commands. There's nothing to install — it's already on your system.

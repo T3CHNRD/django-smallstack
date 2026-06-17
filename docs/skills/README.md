@@ -15,6 +15,7 @@ When an AI agent is asked to modify or extend this project, these files help it:
 
 | File | Description |
 |------|-------------|
+| [cli-tools.md](cli-tools.md) | **Start here for "is there a tool for X?"** — task → tool / failure → tool / tool → docs lookup tables |
 | [django-apps.md](django-apps.md) | Creating apps, CRUDView + tables2 management pages, title bar pattern |
 | [templates.md](templates.md) | Template inheritance, blocks, includes, common patterns |
 | [admin-page-styling.md](admin-page-styling.md) | **Definitive UI reference**: buttons, cards, tables, stat cards, action cards, tabs, filter toggles, forms, modals, starter template |
@@ -65,6 +66,7 @@ When an AI agent is asked to modify or extend this project, these files help it:
 
 AI agents should read relevant skill files before making changes to the corresponding parts of the codebase. For example:
 
+- **Before running ANY operational command** (diagnose, smoke-test, mint token, backup, screenshot, deploy) → read `cli-tools.md` first
 - Before creating a new app → read `django-apps.md`
 - Before creating templates → read `templates.md`
 - Before building any admin/management page → read `admin-page-styling.md` (buttons, cards, tables, forms, etc.)

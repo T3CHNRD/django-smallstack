@@ -360,6 +360,12 @@ pages:
     is_faq: true
     category: "Reference"
 
+  - slug: cli-reference
+    title: "CLI Reference"
+    description: "Every manage.py command, Make target, and system tool — with options, examples, and when-to-use"
+    icon: "terminal"
+    category: "Reference"
+
   # ---------------------------------------------------------------------------
   # MCP — Model Context Protocol server for AI clients
   # ---------------------------------------------------------------------------
