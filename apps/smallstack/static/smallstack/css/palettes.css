@@ -150,6 +150,7 @@ html[data-palette="dark-blue"] {
 }
 
 html[data-palette="dark-blue"][data-theme="dark"] {
+    /* Accents — keep the existing blue identity. */
     --primary: #4DA3FF;
     --primary-hover: #82CFFF;
     --secondary: #1E40AF;
@@ -165,6 +166,39 @@ html[data-palette="dark-blue"][data-theme="dark"] {
     --link-color: #CFE8FF;
     --link-hover: #E6F2FF;
     --breadcrumb-link: #F1F5F9;
+
+    /* Navy-tinted surfaces. The base dark theme inherits warm-gray
+       surfaces (#212121 cards, #1e1e1e sidebar/footer) which read
+       "brownish" against the cool navy header. These overrides pull
+       every surface into the same cool hue family so the page reads
+       as one continuous modern dark-blue interface.
+
+       Lightness hierarchy (darkest → lightest):
+         footer-bg #08111f  ◀── deepest, frames the bottom edge
+         sidebar-bg #0a1525 ◀── base layer
+         body-bg / content-bg #0c1729
+         card-bg #15263e    ◀── elevated surface
+         card-header-bg #1b2e49  ◀── subtle band on cards
+         input-border #2a4264    ◀── slightly lighter for affordance
+
+       Borders + muted text follow the slate-blue family so badges and
+       color-mix surfaces stay cohesive. */
+    --body-bg: #0c1729;
+    --content-bg: #0c1729;
+    --card-bg: #15263e;
+    --card-header-bg: #1b2e49;
+    --card-border: #20335a;
+    --hairline-color: #20335a;
+    --sidebar-bg: #0a1525;
+    --sidebar-hover-bg: #15263e;
+    --sidebar-border: #20335a;
+    --footer-bg: #08111f;
+    --footer-fg: #94a3b8;
+    --input-bg: #15263e;
+    --input-border: #2a4264;
+    --text-muted: #94a3b8;
+    --breadcrumb-fg: #94a3b8;
+    --breadcrumb-separator: #4a5d7e;
 }
 
 /* ============================================
