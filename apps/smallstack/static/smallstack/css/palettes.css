@@ -240,21 +240,63 @@ html[data-palette="orange"] {
 }
 
 html[data-palette="orange"][data-theme="dark"] {
-    --primary: #ff9800;
-    --primary-hover: #ffb74d;
-    --secondary: #e65100;
-    --header-bg: #4a2800;
-    --hero-gradient-end: #bf360c;
-    --sidebar-active-bg: #ff9800;
-    --sidebar-active-fg: #000000;
-    --input-focus-border: #ff9800;
-    --button-bg: #ff9800;
-    --button-fg: #000000;
-    --button-hover-bg: #ffb74d;
-    --link-fg: #ffffff;
-    --link-color: #ffffff;
-    --link-hover: #e0e0e0;
-    --breadcrumb-link: #ffffff;
+    /* Modern black + vibrant orange accent. Same pattern as dark-blue
+       and dark-purple: near-black neutral surfaces with a deliberate
+       cool channel bias (R<G<B by 3-7 points) that resists color-
+       context warming when red content sits adjacent. The saturated
+       orange accent does all the visual work — used for primary
+       buttons, sidebar-active, link color, focus borders, badges.
+
+       Accent: #f97316 (Tailwind orange-500) — vibrant, saturated.
+
+       Surfaces (identical to dark-blue and dark-purple — palette-
+       agnostic):
+         body-bg / footer-bg  #0a0b0f  ◀── deep near-black canvas
+         header-bg            #111218  ◀── chrome band, slight lift
+         sidebar-bg           #0c0d12  ◀── between body and card
+         card-bg / input-bg   #16181f  ◀── elevated surface
+         card-header-bg       #1d1f28  ◀── subtle band on cards
+         card-border          #262936  ◀── visible hairline */
+
+    /* Vibrant orange accent */
+    --primary: #f97316;
+    --primary-hover: #fb923c;
+    --secondary: #ea580c;
+    --sidebar-active-bg: #f97316;
+    --sidebar-active-fg: #ffffff;
+    --input-focus-border: #f97316;
+    --button-bg: #f97316;
+    --button-fg: #ffffff;
+    --button-hover-bg: #fb923c;
+
+    /* Links — lighter orange to pop on near-black without competing
+       with the primary saturated orange. */
+    --link-fg: #fb923c;
+    --link-color: #fb923c;
+    --link-hover: #fdba74;
+    --breadcrumb-link: #e4e4e7;
+
+    /* Surfaces — same cool-biased near-black as dark-blue / dark-purple */
+    --body-bg: #0a0b0f;
+    --content-bg: #0a0b0f;
+    --header-bg: #111218;
+    --hero-gradient-end: #181a22;
+    --card-bg: #16181f;
+    --card-header-bg: #1d1f28;
+    --card-border: #262936;
+    --hairline-color: #262936;
+    --sidebar-bg: #0c0d12;
+    --sidebar-hover-bg: #16181f;
+    --sidebar-border: #262936;
+    --footer-bg: #0a0b0f;
+    --footer-fg: #71717a;
+    --input-bg: #16181f;
+    --input-border: #3c3f4a;
+
+    /* Muted text — zinc family, readable on near-black */
+    --text-muted: #a1a1aa;
+    --breadcrumb-fg: #a1a1aa;
+    --breadcrumb-separator: #52525b;
 }
 
 /* ============================================
