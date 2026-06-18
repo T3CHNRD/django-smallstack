@@ -47,9 +47,15 @@
         z-index: 1;
     }
 
-    /* Mini layout diagram inside each card */
+    /* Mini layout diagram inside each card.
+       These represent the chrome of a real SmallStack page (topbar /
+       sidebar / content), so they use the SAME palette tokens the real
+       chrome uses — not raw --primary, which on saturated palettes
+       (orange) reads as a loud band that drowns out the page itself.
+       Result: each diagram looks like a tiny version of the actual UI
+       across every palette. */
     .layout-diagram {
-        background: color-mix(in srgb, var(--primary) 6%, var(--body-bg));
+        background: var(--body-bg);
         padding: 16px;
         display: flex;
         flex-direction: column;
@@ -58,12 +64,13 @@
     }
     .diagram-topbar {
         height: 10px;
-        background: var(--primary);
+        background: var(--header-bg);
         border-radius: 2px;
         display: flex;
         align-items: center;
         gap: 3px;
         padding: 0 4px;
+        border: 1px solid var(--card-border);
     }
     .diagram-topbar-nav {
         display: flex;
@@ -73,7 +80,7 @@
     .diagram-topbar-nav span {
         width: 14px;
         height: 4px;
-        background: rgba(255,255,255,0.5);
+        background: color-mix(in srgb, var(--body-fg) 35%, transparent);
         border-radius: 1px;
     }
     .diagram-body {
@@ -83,17 +90,24 @@
     }
     .diagram-sidebar {
         width: 28px;
-        background: color-mix(in srgb, var(--primary) 20%, var(--body-bg));
+        background: var(--sidebar-bg);
         border-radius: 2px;
         display: flex;
         flex-direction: column;
         gap: 2px;
         padding: 3px 2px;
+        border: 1px solid var(--card-border);
     }
     .diagram-sidebar span {
         height: 3px;
-        background: color-mix(in srgb, var(--primary) 40%, var(--body-bg));
+        background: color-mix(in srgb, var(--body-fg) 20%, var(--sidebar-bg));
         border-radius: 1px;
+    }
+    /* The first sidebar item represents the active row — single accent
+       hint, exactly like the real .nav-link.active treatment. */
+    .diagram-sidebar span:first-child {
+        background: var(--primary);
+        opacity: 0.7;
     }
     .diagram-content {
         flex: 1;
@@ -180,34 +194,24 @@
         gap: 1.25rem;
     }
     .ref-card {
-        background: #0a0a0a;
-        border: 1px solid #444;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: var(--radius-md, 8px);
         overflow: hidden;
     }
-    [data-theme="light"] .ref-card {
-        background: #f5f5f5;
-        border-color: #d0d0d0;
-    }
     .ref-card-header {
         padding: 14px 18px;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--card-border);
         background: transparent;
         display: flex;
         align-items: center;
         gap: 10px;
     }
-    [data-theme="light"] .ref-card-header {
-        border-bottom-color: #d0d0d0;
-    }
     .ref-card-header h3 {
         margin: 0;
         font-size: 0.95rem;
         font-weight: 600;
-        color: #e0e0e0;
-    }
-    [data-theme="light"] .ref-card-header h3 {
-        color: #333;
+        color: var(--body-fg);
     }
     .ref-card-header .ref-badge {
         font-size: 0.68rem;
@@ -225,86 +229,65 @@
     /* Code blocks */
     .lp-code-wrap {
         position: relative;
-        background: #0a0a0a !important;
-        border: 1px solid #444 !important;
+        background: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
         border-radius: 6px;
         overflow: hidden;
         margin-bottom: 12px;
     }
     .lp-code-wrap:last-child { margin-bottom: 0; }
-    [data-theme="light"] .lp-code-wrap {
-        background: #f5f5f5 !important;
-        border-color: #d0d0d0 !important;
-    }
     .lp-code-wrap pre {
         margin: 0;
         padding: 1rem 1.25rem;
         overflow-x: auto;
         font-size: 13px !important;
         line-height: 1.7 !important;
-        color: #e0e0e0 !important;
+        color: var(--body-fg) !important;
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
         -webkit-font-smoothing: antialiased;
     }
-    [data-theme="light"] .lp-code-wrap pre { color: #333 !important; }
     .lp-code-label {
         display: block;
         padding: 0.4rem 1.25rem;
         font-size: 12px;
         font-weight: 500;
-        color: #888;
-        border-bottom: 1px solid #444;
+        color: var(--body-quiet-color);
+        border-bottom: 1px solid var(--card-border);
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     }
-    [data-theme="light"] .lp-code-label { border-bottom-color: #d0d0d0; }
     .lp-copy-btn {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
         padding: 0.3rem 0.65rem;
-        border: 1px solid #555;
+        border: 1px solid var(--card-border);
         border-radius: 4px;
-        background: #222;
-        color: #ccc;
+        background: color-mix(in srgb, var(--body-fg) 8%, var(--card-bg));
+        color: var(--body-fg);
         font-size: 12px;
         font-weight: 500;
         cursor: pointer;
         transition: color 0.15s, border-color 0.15s;
     }
-    .lp-copy-btn:hover { color: #fff; border-color: #888; }
-    [data-theme="light"] .lp-copy-btn {
-        background: #e8e8e8;
-        border-color: #ccc;
-        color: #555;
-    }
+    .lp-copy-btn:hover { color: var(--body-fg); border-color: var(--primary); }
 
     .ref-note {
         font-size: 0.84rem;
-        color: #999;
+        color: var(--body-quiet-color);
         line-height: 1.5;
         margin-top: 10px;
         padding: 8px 12px;
-        background: #111;
-        border-left: 3px solid #555;
+        background: var(--card-bg);
+        border-left: 3px solid var(--primary);
         border-radius: 0 4px 4px 0;
     }
-    [data-theme="light"] .ref-note {
-        color: var(--body-quiet-color);
-        background: color-mix(in srgb, var(--info-fg) 8%, var(--body-bg));
-        border-left-color: var(--info-fg);
-    }
     .ref-note code {
-        background: #1a1a1a;
+        background: color-mix(in srgb, var(--body-fg) 5%, var(--card-bg));
         padding: 1px 5px;
         border-radius: 3px;
         font-size: 0.82rem;
-        color: #ccc;
-        border: 1px solid #333;
-    }
-    [data-theme="light"] .ref-note code {
-        background: #e8e8e8;
-        color: #333;
-        border-color: #ccc;
+        color: var(--body-fg);
+        border: 1px solid var(--card-border);
     }
 
     .ref-table {
@@ -312,14 +295,10 @@
         border-collapse: collapse;
         font-size: 0.84rem;
         margin-bottom: 10px;
-        background: #0a0a0a !important;
+        background: var(--card-bg) !important;
         border-radius: 6px;
         overflow: hidden;
-        border: 1px solid #444;
-    }
-    [data-theme="light"] .ref-table {
-        background: #f5f5f5 !important;
-        border-color: #d0d0d0;
+        border: 1px solid var(--card-border);
     }
     .ref-table tr,
     .ref-table tr:nth-child(odd),
@@ -335,41 +314,28 @@
         font-size: 0.72rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: #666;
-        border-bottom: 1px solid #333;
+        color: var(--body-quiet-color);
+        border-bottom: 1px solid var(--card-border);
         background: transparent !important;
-    }
-    [data-theme="light"] .ref-table th {
-        color: #888;
-        border-bottom-color: #d0d0d0;
     }
     .ref-table td {
         padding: 9px 14px;
-        border-bottom: 1px solid #222;
-        color: #ccc;
+        border-bottom: 1px solid var(--hairline-color, var(--card-border));
+        color: var(--body-fg);
         background: transparent !important;
         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
         font-size: 0.82rem;
-    }
-    [data-theme="light"] .ref-table td {
-        border-bottom-color: #e4e4e4;
-        color: #444;
     }
     .ref-table tr:last-child td {
         border-bottom: none;
     }
     .ref-table code {
-        background: #1a1a1a;
+        background: color-mix(in srgb, var(--body-fg) 5%, var(--card-bg));
         padding: 2px 6px;
         border-radius: 3px;
         font-size: 0.82rem;
-        color: #e0e0e0;
-        border: 1px solid #333;
-    }
-    [data-theme="light"] .ref-table code {
-        background: #e8e8e8;
-        color: #333;
-        border-color: #ccc;
+        color: var(--body-fg);
+        border: 1px solid var(--card-border);
     }
 </style>
 {% endblock %}
