@@ -16,6 +16,8 @@ When an AI agent is asked to modify or extend this project, these files help it:
 | File | Description |
 |------|-------------|
 | [cli-tools.md](cli-tools.md) | **Start here for "is there a tool for X?"** — task → tool / failure → tool / tool → docs lookup tables |
+| [modern-dark-theme.md](modern-dark-theme.md) | **Read before building any page** — canonical patterns, anti-patterns, variable list for the v0.9.x modern-dark theme |
+| [modify-palettes.md](modify-palettes.md) | Add a new color palette or tune an existing one — file map, color-science gotchas, verification |
 | [django-apps.md](django-apps.md) | Creating apps, CRUDView + tables2 management pages, title bar pattern |
 | [templates.md](templates.md) | Template inheritance, blocks, includes, common patterns |
 | [admin-page-styling.md](admin-page-styling.md) | **Definitive UI reference**: buttons, cards, tables, stat cards, action cards, tabs, filter toggles, forms, modals, starter template |
@@ -70,8 +72,10 @@ AI agents should read relevant skill files before making changes to the correspo
 - Before creating a new app → read `django-apps.md`
 - Before creating templates → read `templates.md`
 - Before building any admin/management page → read `admin-page-styling.md` (buttons, cards, tables, forms, etc.)
-- Before modifying CSS/theming → read `theming-system.md`
-- Before building a new page that should fit the SmallStack theme → read `building-themed-pages.md`
+- **Before building ANY new page or component → read `modern-dark-theme.md` first** (the v0.9.x canonical patterns supersede earlier guides)
+- Before adding a new color palette → read `modify-palettes.md`
+- Before modifying CSS/theming → read `theming-system.md` for the variable cascade, then `modern-dark-theme.md` for current patterns
+- Before building a new page that should fit the SmallStack theme → read `modern-dark-theme.md` (NOT the older `building-themed-pages.md`)
 - Before adding a custom theme (Bootstrap, Tailwind, etc.) → read `adding-your-own-theme.md`
 - Before deciding which theme approach to take → read `theme-scenarios.md`
 - Before working with auth → read `authentication.md`

@@ -95,6 +95,12 @@ pages:
     icon: "palette"
     category: "Theming"
 
+  - slug: theme-architecture
+    title: "Theme Architecture"
+    description: "How the modern-dark theme system works — variable cascade, palette design, color science"
+    icon: "palette"
+    category: "Theming"
+
   - slug: theme-color-reference
     title: "Theme Color Quick Reference"
     description: "Every CSS variable with current light/dark values and an AI prompt template for generating new palettes"

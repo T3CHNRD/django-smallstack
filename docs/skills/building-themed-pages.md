@@ -1,5 +1,7 @@
 # Skill: Building Pages That Fit the SmallStack Theme
 
+> **⚠️ Superseded by [`modern-dark-theme.md`](modern-dark-theme.md) (v0.9.x).** Read that file first. The patterns below are still functionally correct but several were tightened in the post-v0.9 refactor: surface values changed (cards now `#161b22` GitHub-Dark-style cool-biased near-black; emerald palette = `#131722`), table striping uses `--body-fg` instead of `--primary` tint, and a new `--accent-band-bg` variable replaces inlined `color-mix(--primary 15%, --body-bg)` recipes. The patterns here remain useful as exhaustive examples — but defer to `modern-dark-theme.md` when guidance conflicts.
+
 This skill teaches how to build new pages that look correct in light mode, dark mode, and all five color palettes — without writing any dark mode overrides. It applies only to pages that extend `smallstack/base.html` (not third-party themes).
 
 ## The Core Idea

@@ -5,9 +5,49 @@ description: Complete reference of every CSS custom property with current values
 
 # Theme Color Quick Reference
 
-Every color in SmallStack is a CSS custom property defined in `static/smallstack/css/theme.css`. This page lists every variable, its current value in both modes, and what it controls — so you can hand this to a designer or AI and get back a complete, cohesive palette.
+Every color in SmallStack is a CSS custom property. This page lists every variable, its purpose, and the current values across the five palettes — so you can hand this to a designer or AI and get back a complete, cohesive theme.
 
-**File:** `apps/smallstack/static/smallstack/css/theme.css`
+> **For the design philosophy behind these values** (modern-dark canvas, vibrant accent, surface bias, color-context corrections), see [`theme-architecture.md`](theme-architecture.md). For AI agents building pages, the prescriptive companion is [`docs/skills/modern-dark-theme.md`](https://github.com/emichaud/django-smallstack/blob/main/docs/skills/modern-dark-theme.md).
+
+**Files:**
+- `apps/smallstack/static/smallstack/css/theme.css` — base + dark defaults
+- `apps/smallstack/static/smallstack/css/palettes.css` — per-palette overrides
+
+## Modern dark-palette values (v0.9.x+)
+
+Surface tokens across the four accent palettes — note the cool channel bias:
+
+| Token | Blue / Purple / Orange | Django (emerald) | High-contrast |
+|---|---|---|---|
+| `--body-bg` | `#0a0b0f` | `#07080f` | `#000000` |
+| `--card-bg` | `#161b22` | `#131722` | `#1a1a1a` |
+| `--card-header-bg` | `#1d2230` | `#1a1e2b` | `#262626` |
+| `--card-border` | `#262d3d` | `#232838` | `#808080` |
+| `--sidebar-bg` | `#0c0d12` | `#090b13` | `#0a0a0a` |
+| `--footer-bg` | `#0a0b0f` | `#07080f` | `#000000` |
+| `--input-bg` | `#161b22` | `#131722` | `#1a1a1a` |
+| `--input-border` | `#3c4356` | `#383c4c` | `#999999` |
+
+Accent tokens per palette:
+
+| Token | Blue | Purple | Orange | Django | High-contrast |
+|---|---|---|---|---|---|
+| `--primary` | `#3b82f6` | `#a855f7` | `#f97316` | `#10b981` | `#ffffff` |
+| `--primary-hover` | `#60a5fa` | `#c084fc` | `#fb923c` | `#34d399` | `#e0e0e0` |
+| `--link-color` | `#60a5fa` | `#c084fc` | `#fb923c` | `#34d399` | `#ffffff` |
+| `--button-bg` | `#3b82f6` | `#a855f7` | `#f97316` | `#10b981` | `#ffffff` |
+| `--button-fg` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#000000` |
+
+Recipe tokens:
+
+| Token | Blue / Purple | Orange / Django / High-contrast |
+|---|---|---|
+| `--accent-band-bg` | `color-mix(--primary 15%, --body-bg)` (tinted) | `var(--card-bg)` (neutral) |
+| `--hero-gradient-end` | `#181d24` (blue/purple/orange) | `#171a26` (django), `#111111` (high-contrast) |
+
+## Legacy (pre-v0.9) dark values
+
+The tables below describe the base `[data-theme="dark"]` block in `theme.css` — the "django default" historical values. **These are overridden by every modern palette block above.** They remain as the cascade fallback; the actual rendered values come from the palette tables.
 
 ## Primary Colors
 

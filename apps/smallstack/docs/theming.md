@@ -7,6 +7,8 @@ description: Customize colors, dark mode, and components
 
 The {{ project_name }} theme is built on Django admin's CSS foundation with custom CSS variables for easy customization and automatic dark/light mode support.
 
+> **As of v0.9.x SmallStack ships a modern-dark theme system** with five palettes (Django/default, Blue, Purple, Orange, Contrast), cool-biased near-black surfaces, and vibrant Tailwind-style accents. For the design philosophy behind the new defaults, read [`theme-architecture.md`](theme-architecture.md). For the variable values per palette, read [`theme-color-reference.md`](theme-color-reference.md). To switch palettes as a user, use the swatch grid in the user-menu dropdown (avatar in top-right).
+
 ## Key Files
 
 | File | Purpose |
