@@ -155,6 +155,14 @@
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+
+    /* Accent band — the "you are here" tinted background used by hero
+       sections, page-header bleeds, TOC headers, etc. Defaults to a
+       subtle 15% accent mix; palettes whose accent goes muddy at low
+       lightness (orange, emerald, high-contrast) override to card-bg.
+       Use this variable instead of hard-coding the recipe so adding
+       new palettes is a one-line change. */
+    --accent-band-bg: color-mix(in srgb, var(--primary) 15%, var(--body-bg));
 }
 
 /* Sidebar flash prevention — suppress transition on initial page load */
@@ -1922,7 +1930,7 @@ body.sidebar-closed .site-footer {
 
 /* Full-bleed header — lives outside .content-wrapper, inside .main-content */
 .page-header-bleed {
-    background: color-mix(in srgb, var(--primary) 15%, var(--body-bg));
+    background: var(--accent-band-bg);
     margin: -20px -20px 20px -20px;
     padding: 24px;
 }

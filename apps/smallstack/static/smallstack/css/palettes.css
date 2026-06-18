@@ -204,14 +204,8 @@ html[data-palette="high-contrast"][data-theme="dark"] {
     --breadcrumb-separator: #999999;
 }
 
-/* Page-header band: high-contrast palette also skips the
-   color-mix(--primary 15%, --body-bg) recipe — with white as the
-   accent, 15% mix produces a medium-gray band that's visually noisy.
-   Use card-bg so the band is a clear lift from body but stays a
-   consistent neutral. */
-html[data-palette="high-contrast"][data-theme="dark"] .page-header-bleed {
-    background: var(--card-bg) !important;
-}
+/* High-contrast page-header-bleed is now handled by the
+   --accent-band-bg override at the bottom of this file. */
 
 /* High-contrast dark: explicit overrides for nav links and icons */
 html[data-palette="high-contrast"][data-theme="dark"] .nav-link:not(.active),
@@ -412,29 +406,27 @@ html[data-palette="orange"][data-theme="dark"] {
     --breadcrumb-separator: #52525b;
 }
 
-/* Page-header band + hero-section: skip the saturated-primary recipes
-   from theme.css for orange AND django (emerald) palettes. Warm or
-   yellow-shifted hues at low lightness mix toward muddy brown / olive
-   instead of staying readable as their parent hue. Blue stays navy
-   and purple stays plum at the same low lightness, so they keep the
-   tinted band/gradient. Orange and emerald use the neutral card
-   surface instead — the band reads clean and the saturated accent
-   stays reserved for data + actions where it pops.
+/* Accent band override — orange, django (emerald), and high-contrast
+   palettes all have accent colors that go muddy at low lightness
+   (brown / olive / medium-gray) when mixed at 15% with body-bg.
+   Setting --accent-band-bg to the card surface makes every band that
+   references the variable (page-header-bleed, toc-header, hero-section,
+   etc.) clean up at once.
 
-   .page-header-bleed uses color-mix(--primary 15%, --body-bg) — a
-   subtle band on most pages.
-
-   .hero-section uses linear-gradient(135deg, var(--primary) 0%,
-   var(--hero-gradient-end) 100%) — a large dramatic hero gradient on
-   the help TOC and similar landing pages. For warm-shifted accents
-   this gradient produces a huge muddy-brown sweep across the page. */
-html[data-palette="orange"][data-theme="dark"] .page-header-bleed,
-html[data-palette="django"][data-theme="dark"] .page-header-bleed {
-    background: var(--card-bg) !important;
+   Blue and purple are unaffected — their accents stay readable as
+   navy/plum at the same mix, so they keep the tinted band. */
+html[data-palette="orange"][data-theme="dark"],
+html[data-palette="django"][data-theme="dark"],
+html[data-palette="high-contrast"][data-theme="dark"] {
+    --accent-band-bg: var(--card-bg);
 }
 
+/* .hero-section uses a saturated gradient, not the band variable, so it
+   needs an explicit override per palette where the gradient goes muddy.
+   Override matches the same set as --accent-band-bg above. */
 html[data-palette="orange"][data-theme="dark"] .hero-section,
-html[data-palette="django"][data-theme="dark"] .hero-section {
+html[data-palette="django"][data-theme="dark"] .hero-section,
+html[data-palette="high-contrast"][data-theme="dark"] .hero-section {
     background: var(--card-bg) !important;
 }
 
