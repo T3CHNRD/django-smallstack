@@ -153,7 +153,9 @@
     color: var(--body-fg);
   }
 
-  /* ── Empty state — what's indexed ───────────────────────────── */
+  /* ── Sources accordion — Swagger-style collapsible registry ─── */
+  /* Compact rows by default; expand for the API doc-style detail
+     pane. Secondary to the syntax poster, but rich for the curious. */
   .sources-panel {
     margin-top: 4rem;
     display: grid;
@@ -173,88 +175,228 @@
     border-top: 1px solid var(--body-fg);
     padding-top: 0.8rem;
   }
+  .sources-label .sources-hint {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: color-mix(in srgb, var(--body-quiet-color) 80%, transparent);
+    font-style: italic;
+    font-family: ui-serif, Georgia, serif;
+    line-height: 1.5;
+  }
   .sources-list {
     display: flex;
     flex-direction: column;
-    gap: 1.4rem;
+    gap: 0.4rem;
   }
+
+  /* Each source = a <details> behaving like a Swagger row. */
   .source-card {
-    padding: 1.1rem 1.3rem;
-    background: color-mix(in srgb, var(--body-fg) 3%, var(--card-bg));
-    border: 1px solid color-mix(in srgb, var(--body-fg) 10%, transparent);
+    background: color-mix(in srgb, var(--body-fg) 2%, var(--card-bg));
+    border: 1px solid color-mix(in srgb, var(--body-fg) 9%, transparent);
     border-left: 3px solid var(--primary);
-    border-radius: 6px;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.15s, background 0.15s;
   }
+  .source-card[open] {
+    background: color-mix(in srgb, var(--body-fg) 4%, var(--card-bg));
+    border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  }
+  .source-card-empty {
+    border-left-color: color-mix(in srgb, var(--body-fg) 18%, transparent);
+  }
+
+  /* ── Collapsed bar (summary) — Swagger endpoint row ─────────── */
   .source-card-head {
+    list-style: none;
+    cursor: pointer;
     display: flex;
-    align-items: baseline;
-    gap: 0.85rem;
-    margin-bottom: 0.7rem;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem 0.9rem;
+    user-select: none;
+    transition: background 0.12s;
+  }
+  .source-card-head::-webkit-details-marker { display: none; }
+  .source-card-head:hover {
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
+  }
+  .source-card-chevron {
+    width: 14px;
+    height: 14px;
+    color: var(--body-quiet-color);
+    transition: transform 0.18s, color 0.15s;
+    flex: 0 0 auto;
+  }
+  .source-card[open] .source-card-chevron {
+    transform: rotate(90deg);
+    color: var(--primary);
   }
   .source-card-kind {
     font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
     font-size: 0.62rem;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     color: var(--primary);
     font-weight: 700;
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    padding: 3px 7px;
+    border-radius: 3px;
+    flex: 0 0 auto;
+  }
+  .source-card-empty .source-card-kind {
+    color: var(--body-quiet-color);
+    background: color-mix(in srgb, var(--body-fg) 8%, transparent);
+  }
+  .source-card-tool {
+    font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
+    font-size: 0.78rem;
+    color: var(--body-fg);
+    font-weight: 500;
+    flex: 0 0 auto;
   }
   .source-card-title {
     font-family: ui-serif, "Iowan Old Style", Georgia, serif;
     font-style: italic;
-    font-size: 1.15rem;
+    font-size: 0.98rem;
     font-weight: 500;
-    color: var(--body-fg);
+    color: color-mix(in srgb, var(--body-fg) 75%, transparent);
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .source-card-count {
     font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--body-quiet-color);
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
+    flex: 0 0 auto;
   }
   .source-card-jump {
-    margin-left: 0.5rem;
     font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     letter-spacing: 0.1em;
     color: var(--primary);
     text-decoration: none;
     text-transform: uppercase;
-    opacity: 0.85;
+    opacity: 0.7;
     transition: opacity 0.15s;
+    flex: 0 0 auto;
   }
   .source-card-jump:hover { opacity: 1; }
 
+  /* ── Expanded body — Swagger-style schema panel ─────────────── */
+  .source-card-body {
+    padding: 0.2rem 1rem 1.1rem 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--body-fg) 8%, transparent);
+    background: color-mix(in srgb, var(--body-fg) 1.5%, transparent);
+  }
+  .source-card-section {
+    margin-top: 1rem;
+  }
+  .source-card-section .section-label {
+    font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--body-quiet-color);
+    margin-bottom: 0.45rem;
+  }
   .source-card-fields,
   .source-card-examples {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.45rem;
-    margin-top: 0.55rem;
+    gap: 0.4rem;
   }
-  .source-card-fields .fields-label,
-  .source-card-examples .examples-label {
+  .source-card-fields code {
+    font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
+    font-size: 0.72rem;
+    color: var(--body-fg);
+    background: color-mix(in srgb, var(--body-fg) 7%, var(--card-bg));
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid color-mix(in srgb, var(--body-fg) 10%, transparent);
+  }
+  .source-card-fields code.is-display {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 22%, transparent);
+  }
+  .source-card-fields code.is-subtitle {
+    color: color-mix(in srgb, var(--primary) 80%, var(--body-fg));
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 16%, transparent);
+  }
+  .source-fields-key {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
     font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
     font-size: 0.6rem;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.06em;
     color: var(--body-quiet-color);
-    margin-right: 0.4rem;
   }
-
-  /* ── Live record browser inside a model source card ─────────── */
-  .source-card-section {
-    margin-top: 1rem;
-    padding-top: 0.9rem;
-    border-top: 1px solid color-mix(in srgb, var(--body-fg) 8%, transparent);
+  .source-fields-key .swatch {
+    display: inline-block;
+    width: 8px; height: 8px;
+    margin-right: 0.35rem;
+    border-radius: 2px;
+    vertical-align: middle;
+    background: var(--primary);
   }
-  .source-card-section .section-label {
+  .source-fields-key .swatch.muted {
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .source-signature {
+    font-family: var(--font-monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    padding: 0.7rem 0.9rem;
+    background: color-mix(in srgb, var(--body-fg) 4%, var(--card-bg));
+    border: 1px solid color-mix(in srgb, var(--body-fg) 9%, transparent);
+    border-radius: 4px;
+    color: var(--body-fg);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .source-signature .sig-tool { color: var(--primary); font-weight: 600; }
+  .source-signature .sig-arg-name { color: color-mix(in srgb, var(--primary) 70%, var(--body-fg)); }
+  .source-signature .sig-type { color: var(--body-quiet-color); }
+  .source-signature .sig-comment {
+    color: var(--body-quiet-color);
+    font-style: italic;
+  }
+  .source-endpoint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    background: color-mix(in srgb, var(--body-fg) 4%, var(--card-bg));
+    border: 1px solid color-mix(in srgb, var(--body-fg) 9%, transparent);
+    border-radius: 4px;
     font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
-    font-size: 0.6rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--body-quiet-color);
-    margin-bottom: 0.5rem;
+    font-size: 0.74rem;
+    color: var(--body-fg);
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .source-endpoint:hover {
+    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+    color: var(--primary);
+  }
+  .source-endpoint .verb {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    padding: 2px 6px;
+    border-radius: 3px;
   }
   .preview-list {
     list-style: none;
@@ -317,19 +459,6 @@
   }
 
   /* ── Empty / opt-in hint card ───────────────────────────────── */
-  .source-card-empty {
-    border-left-color: color-mix(in srgb, var(--body-fg) 18%, transparent);
-    background: color-mix(in srgb, var(--body-fg) 2%, var(--card-bg));
-  }
-  .source-card-empty .kind-muted {
-    color: var(--body-quiet-color);
-    background: color-mix(in srgb, var(--body-fg) 8%, var(--card-bg));
-    padding: 2px 6px;
-    border-radius: 3px;
-  }
-  .source-card-title-muted {
-    color: color-mix(in srgb, var(--body-fg) 70%, transparent) !important;
-  }
   .empty-hint {
     margin: 0.8rem 0 0.7rem 0;
     font-size: 0.88rem;
@@ -376,14 +505,6 @@
     border-bottom: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
   }
   .empty-coda a:hover { border-bottom-color: var(--primary); }
-  .source-card-fields code {
-    font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
-    font-size: 0.75rem;
-    color: var(--body-fg);
-    background: color-mix(in srgb, var(--body-fg) 6%, var(--card-bg));
-    padding: 2px 7px;
-    border-radius: 3px;
-  }
   .example-pill {
     font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
     font-size: 0.75rem;
@@ -784,88 +905,7 @@
     </div>
 
   {% else %}
-    <!-- ───────── What's indexed ───────── -->
-    {% if indexed_sources %}
-    <div class="sources-panel search-fade d4">
-      <div class="sources-label">What's<br>indexed</div>
-      <div class="sources-list">
-        {% for source in indexed_sources %}
-          <div class="source-card{% if source.kind == 'model' %} source-card-model{% endif %}">
-            <div class="source-card-head">
-              <span class="source-card-kind">{% if source.kind == "help" %}DOC{% else %}MODEL{% endif %}</span>
-              <span class="source-card-title">{{ source.label }}</span>
-              {% if source.total %}<span class="source-card-count">{{ source.total }} {% if source.kind == 'help' %}article{{ source.total|pluralize }}{% else %}record{{ source.total|pluralize }}{% endif %}</span>{% endif %}
-              {% if source.url %}<a href="{{ source.url }}" class="source-card-jump">View all →</a>{% endif %}
-            </div>
-
-            <div class="source-card-fields">
-              <span class="fields-label">FIELDS</span>
-              {% for field in source.fields %}<code>{{ field }}</code>{% endfor %}
-            </div>
-
-            {% if source.previews %}
-              <div class="source-card-section">
-                <div class="section-label">Browse latest</div>
-                <ul class="preview-list">
-                  {% for preview in source.previews %}
-                    <li class="preview-row">
-                      <a href="{{ preview.url|default:'#' }}" class="preview-link">
-                        <span class="preview-arrow">›</span>
-                        <span class="preview-text">{{ preview.display }}</span>
-                      </a>
-                      <a href="?q={{ preview.display|urlencode }}" class="preview-search"
-                         title="Search for this">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-                          <path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16
-                                   c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14
-                                   5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                        </svg>
-                      </a>
-                    </li>
-                  {% endfor %}
-                </ul>
-              </div>
-            {% endif %}
-
-            {% if source.examples %}
-              <div class="source-card-examples">
-                <span class="examples-label">{% if source.previews %}Or try{% else %}Try{% endif %}</span>
-                {% for ex in source.examples %}
-                  <a href="?q={{ ex|urlencode }}" class="example-pill">{{ ex }}</a>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
-        {% endfor %}
-
-        {% if registered_models == 0 %}
-          <!-- No models opted in yet — show a clear "how to" hint -->
-          <div class="source-card source-card-empty">
-            <div class="source-card-head">
-              <span class="source-card-kind kind-muted">+ MODELS</span>
-              <span class="source-card-title source-card-title-muted">Add searchable models</span>
-            </div>
-            <p class="empty-hint">
-              No CRUDView has <code>enable_search = True</code> yet. Opt in to
-              the search index from any CRUDView with three lines:
-            </p>
-            <pre class="empty-snippet"><code>class TicketCRUDView(CRUDView):
-    enable_search = True
-    search_fields = ["title", "description"]
-    search_display = "title"</code></pre>
-            <p class="empty-coda">
-              The model joins this index, lights up an MCP
-              <code>search_tickets</code> tool for Claude, and starts appearing
-              here. See
-              <a href="{% url 'help:section_detail' section='smallstack' slug='search' %}">the search docs</a>.
-            </p>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- ───────── Syntax poster ───────── -->
+    <!-- ───────── Syntax poster (primary teaching surface) ───────── -->
     <div class="syntax-poster search-fade d4">
       <div class="syntax-poster-label">Query<br>syntax</div>
       <div>
@@ -897,6 +937,126 @@
         </p>
       </div>
     </div>
+
+    <!-- ───────── Sources registry — collapsed Swagger-style rows ───────── -->
+    {% if indexed_sources or registered_models == 0 %}
+    <div class="sources-panel search-fade d4">
+      <div class="sources-label">
+        Indexed<br>sources
+        <span class="sources-hint">Click a row to expand its schema, MCP tool, and live records.</span>
+      </div>
+      <div class="sources-list">
+        {% for source in indexed_sources %}
+          <details class="source-card{% if source.kind == 'model' %} source-card-model{% endif %}">
+            <summary class="source-card-head">
+              <svg viewBox="0 0 16 16" class="source-card-chevron" aria-hidden="true" fill="currentColor">
+                <path d="M5 3l6 5-6 5z"/>
+              </svg>
+              <span class="source-card-kind">{% if source.kind == "help" %}DOC{% else %}MODEL{% endif %}</span>
+              <span class="source-card-tool">{{ source.mcp_tool }}</span>
+              <span class="source-card-title">{{ source.label }}</span>
+              {% if source.total %}<span class="source-card-count">{{ source.total }} {% if source.kind == 'help' %}article{{ source.total|pluralize }}{% else %}record{{ source.total|pluralize }}{% endif %}</span>{% endif %}
+              {% if source.url %}<a href="{{ source.url }}" class="source-card-jump" onclick="event.stopPropagation()">View all →</a>{% endif %}
+            </summary>
+
+            <div class="source-card-body">
+              <div class="source-card-section">
+                <div class="section-label">Indexed fields</div>
+                <div class="source-card-fields">
+                  {% for field in source.fields %}<code class="{% if field == source.display_field %}is-display{% elif field == source.subtitle_field %}is-subtitle{% endif %}">{{ field }}</code>{% endfor %}
+                </div>
+                {% if source.display_field or source.subtitle_field %}
+                  <div class="source-fields-key">
+                    {% if source.display_field %}<span><span class="swatch"></span>display</span>{% endif %}
+                    {% if source.subtitle_field %}<span><span class="swatch muted"></span>subtitle</span>{% endif %}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="source-card-section">
+                <div class="section-label">MCP tool</div>
+                <div class="source-signature"><span class="sig-tool">{{ source.mcp_tool }}</span>(<span class="sig-arg-name">query</span>: <span class="sig-type">str</span>, <span class="sig-arg-name">limit</span>: <span class="sig-type">int</span> = 10) <span class="sig-comment"># → ranked hits with display, snippet, url</span></div>
+              </div>
+
+              {% if source.url %}
+              <div class="source-card-section">
+                <div class="section-label">Web endpoint</div>
+                <a href="{{ source.url }}" class="source-endpoint">
+                  <span class="verb">GET</span><span>{{ source.url }}</span>
+                </a>
+              </div>
+              {% endif %}
+
+              {% if source.previews %}
+                <div class="source-card-section">
+                  <div class="section-label">Browse latest</div>
+                  <ul class="preview-list">
+                    {% for preview in source.previews %}
+                      <li class="preview-row">
+                        <a href="{{ preview.url|default:'#' }}" class="preview-link">
+                          <span class="preview-arrow">›</span>
+                          <span class="preview-text">{{ preview.display }}</span>
+                        </a>
+                        <a href="?q={{ preview.display|urlencode }}" class="preview-search"
+                           title="Search for this">
+                          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                            <path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16
+                                     c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14
+                                     5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                          </svg>
+                        </a>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+
+              {% if source.examples %}
+                <div class="source-card-section">
+                  <div class="section-label">{% if source.previews %}Or try these queries{% else %}Try a query{% endif %}</div>
+                  <div class="source-card-examples">
+                    {% for ex in source.examples %}
+                      <a href="?q={{ ex|urlencode }}" class="example-pill">{{ ex }}</a>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </details>
+        {% endfor %}
+
+        {% if registered_models == 0 %}
+          <!-- No models opted in yet — show a clear "how to" hint -->
+          <details class="source-card source-card-empty" open>
+            <summary class="source-card-head">
+              <svg viewBox="0 0 16 16" class="source-card-chevron" aria-hidden="true" fill="currentColor">
+                <path d="M5 3l6 5-6 5z"/>
+              </svg>
+              <span class="source-card-kind">+ MODELS</span>
+              <span class="source-card-tool">enable_search</span>
+              <span class="source-card-title">Add searchable models</span>
+            </summary>
+            <div class="source-card-body">
+              <p class="empty-hint">
+                No CRUDView has <code>enable_search = True</code> yet. Opt in to
+                the search index from any CRUDView with three lines:
+              </p>
+              <pre class="empty-snippet"><code>class TicketCRUDView(CRUDView):
+    enable_search = True
+    search_fields = ["title", "description"]
+    search_display = "title"</code></pre>
+              <p class="empty-coda">
+                The model joins this index, lights up an MCP
+                <code>search_tickets</code> tool for Claude, and starts appearing
+                here. See
+                <a href="{% url 'help:section_detail' section='smallstack' slug='search' %}">the search docs</a>.
+              </p>
+            </div>
+          </details>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   {% endif %}
 </div>
 {% endblock %}

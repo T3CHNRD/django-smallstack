@@ -147,6 +147,11 @@ def get_indexed_sources() -> list[dict]:
             "label": view.model_verbose,
             "model_label": view.model_label,
             "fields": view.fields,
+            "weights": dict(view.weights) if view.weights else {},
+            "display_field": view.display_field,
+            "subtitle_field": view.subtitle_field,
+            "mcp_tool": _mcp_tool_name_for(view),
+            "list_endpoint": _list_url_for(view),
             "examples": examples,
             "previews": previews,
             "total": total,
@@ -164,6 +169,11 @@ def get_indexed_sources() -> list[dict]:
                 "label": "Help & Docs",
                 "model_label": "help.HelpArticle",
                 "fields": ["title", "section", "text"],
+                "weights": {},
+                "display_field": "title",
+                "subtitle_field": "section",
+                "mcp_tool": "search_help",
+                "list_endpoint": "/smallstack/help/",
                 "examples": ["custom palette", "MCP setup", "API tokens"],
                 "previews": [],
                 "total": n,
@@ -174,6 +184,15 @@ def get_indexed_sources() -> list[dict]:
         pass
 
     return sources
+
+
+def _mcp_tool_name_for(view) -> str:
+    """Mirror apps.search.mcp_tools._tool_name_for — kept in sync deliberately."""
+    custom = getattr(view.view_cls, "mcp_tool_name", None)
+    if custom:
+        return f"search_{custom}"
+    plural = str(view.model._meta.verbose_name_plural).lower().replace(" ", "_")
+    return f"search_{plural}"
 
 
 def _list_url_for(view) -> str | None:
