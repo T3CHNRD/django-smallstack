@@ -73,6 +73,14 @@ class TokenCRUDView(CRUDView):
     ]
     search_fields = ["name", "prefix"]
     filter_fields = ["is_active", "user", "token_type", "access_level"]
+
+    # Opted into the unified search index by default. Same search_fields
+    # already drive the list-page search box; opting in lights up the
+    # global /smallstack/search/ page, the topbar omnibar, and an MCP
+    # `search_api_tokens` tool Claude can call.
+    enable_search = True
+    search_display = "name"
+    search_subtitle = "prefix"
     paginate_by = 20
     link_field = "name"
 

@@ -29,6 +29,15 @@ class UserCRUDView(CRUDView):
     actions = [Action.LIST, Action.CREATE, Action.UPDATE, Action.DELETE]
     field_transforms = {"first_name": "preview"}
 
+    # Opted into the unified search index by default. Lights up an MCP
+    # `search_users` tool so Claude Desktop can answer "find the user
+    # named X" out of the box, plus surfaces users in the global
+    # /smallstack/search/ page and topbar omnibar.
+    enable_search = True
+    search_fields = ["username", "email", "first_name", "last_name"]
+    search_display = "username"
+    search_subtitle = "email"
+
     @classmethod
     def _get_template_names(cls, suffix):
         if suffix == "form":
