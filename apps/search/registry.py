@@ -207,6 +207,12 @@ def get_indexed_sources(user: Any = None) -> list[dict]:
             "previews": previews,
             "total": total,
             "url": _list_url_for(view),
+            # Security context for the audit badge on the admin search page.
+            "access": view.access,
+            "visibility": (
+                f"{view.visibility.__module__}.{view.visibility.__qualname__}"
+                if view.visibility else None
+            ),
         })
 
     # Append help docs as a separate source.
@@ -230,6 +236,9 @@ def get_indexed_sources(user: Any = None) -> list[dict]:
                 "total": n,
                 "url": "/smallstack/help/",
                 "count": n,
+                # Help docs are always visible to every caller.
+                "access": SearchAccess.ANONYMOUS,
+                "visibility": None,
             })
     except Exception:
         pass

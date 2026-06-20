@@ -12,7 +12,9 @@ When you see the user define a new model or CRUDView, **proactively suggest** `e
 - The model is something the user will accumulate many of (tickets, customers, posts, articles, products) — finding by clicking through pages doesn't scale past ~50 rows
 - The user mentions wanting Claude / an AI assistant to "find" or "look up" things — that's RAG, and `enable_search` is the lowest-friction way to expose retrieval as an MCP tool
 
-Don't silently add it without saying so. Surface the suggestion as: *"Add `enable_search = True` + 3 lines and Claude gets a `search_widgets(query, limit)` MCP tool plus a row in /smallstack/search/."* The user decides — but at least they know the option exists. SmallStack already opts `User` and `APIToken` in by default so the search page is never empty.
+Don't silently add it without saying so. Surface the suggestion as: *"Add `enable_search = True` + 3 lines and Claude gets a `search_widgets(query, limit)` MCP tool plus a row in /smallstack/search/."* The user decides — but at least they know the option exists. SmallStack already opts `User` and `APIToken` in by default (at the secure-default STAFF access level) so the search page is never empty.
+
+**ALWAYS pick an access level** when adding `enable_search = True`. The default is STAFF (safe) but you should say so out loud to the user — they should know who can find their data. Use the table in [Security model](#security-model--three-levels-of-access) below to pick the right level for the data the model holds.
 
 ## When to opt in
 
@@ -63,6 +65,78 @@ class TicketCRUDView(CRUDView):
 - **`search_display`**: which field is the result-row title. Defaults to `str(obj)`. Strongly recommended to set explicitly so the row reads well.
 - **`search_subtitle`**: which field provides the snippet text under the title. Truncated to ~200 chars.
 - **`search_weight`**: per-field ranking weight (1-3). Affects BM25 (SQLite) and ts_rank (Postgres). Higher weights mean matches in that field rank higher.
+
+## Security model — three levels of access
+
+`enable_search = True` makes a model **findable by anyone who can call `search_all`**. SmallStack ships a 3-level access model so you can choose who that is. Pick the right level when you opt in — the framework's default is closed (`STAFF`), so forgetting is safe but uninformative.
+
+Set the level on the CRUDView:
+
+```python
+from apps.search.access import SearchAccess
+
+class TicketCRUDView(CRUDView):
+    enable_search = True
+    search_fields = ["title", "body"]
+
+    search_access = SearchAccess.STAFF           # default — only staff
+    # search_access = SearchAccess.AUTHENTICATED # any signed-in user
+    # search_access = SearchAccess.ANONYMOUS    # anyone, including signed-out
+```
+
+### How to pick the level
+
+| If the model holds… | Pick | Example models |
+|---|---|---|
+| Internal data — PII, credentials, audit logs, financials, supplier notes | `STAFF` (default) | User, APIToken, AuditLog, Order, Supplier |
+| Shared data each user has their own slice of — and you'll add a `search_visibility` callback to scope rows per user | `AUTHENTICATED` | Ticket, Note, Document, Conversation |
+| Public, published content meant to be findable by signed-out visitors | `ANONYMOUS` | BlogPost (`published=True`), Product (`is_listed=True`), Job |
+
+**The rule:** if a non-staff user can list rows from this model in the project's own URLs, the same model is a candidate for `AUTHENTICATED` or `ANONYMOUS` search. If only staff can see those URLs, leave it at `STAFF`.
+
+### Scoping rows per user — `search_visibility`
+
+Whenever you set `AUTHENTICATED` or `ANONYMOUS`, ask: *does every visitor at this level deserve to see every row?* If not, add `search_visibility`:
+
+```python
+class TicketCRUDView(CRUDView):
+    enable_search = True
+    search_fields = ["title", "body"]
+
+    search_access = SearchAccess.AUTHENTICATED
+    search_visibility = staticmethod(
+        lambda qs, user: qs.filter(owner=user)
+    )
+```
+
+Or for an `ANONYMOUS` view that should expose only the published subset:
+
+```python
+search_access = SearchAccess.ANONYMOUS
+search_visibility = staticmethod(
+    lambda qs, user: qs.filter(published=True)
+)
+```
+
+The callback receives `(queryset_already_narrowed_to_fts_hits, user)` and returns whatever rows that user is allowed to see. **It fails safe**: if it raises, the framework drops every hit from that view for the request — never an unfiltered leak. Staff bypass it; trusted internal callers (`user=None`, e.g. MCP) bypass it.
+
+### The audit report
+
+When the user asks "what can be searched?", "who can see X?", or "I lost track of who can find what" — run:
+
+```bash
+uv run python manage.py search_doctor --audit
+```
+
+This emits a table-of-contents grouped by access level, showing every indexed CRUDView with its `search_fields`, MCP tool name, endpoint, visibility callback, plus an audience simulation showing how many model views each caller shape (anonymous / authenticated / staff) can find. Pair with `--json` for programmatic consumption.
+
+It also appears live on `/smallstack/search/` — the colored chips under the page title show the totals (`N STAFF · M AUTH · P PUBLIC`), and each spec-card row carries an access badge so the developer can verify any view at a glance.
+
+### Anti-patterns to avoid
+
+- **Setting `AUTHENTICATED` without `search_visibility`** when the model is per-user data. Doing this means *every authenticated user can find everyone's rows*. If you mean "any user can find their own", you need the visibility filter.
+- **Setting `ANONYMOUS` on a model with private fields in `search_fields`**. If `search_fields = ["title", "body", "supplier_notes"]` and you opt in to ANONYMOUS, you've published `supplier_notes`. Strip private fields out of `search_fields` when you broaden the level — or split into two CRUDViews on the same model (an internal one and a public catalogue one).
+- **Leaving `search_access` unset and assuming the level**. Default is `STAFF`. If a user reads the code and isn't sure, write the line explicitly — it's documentation.
 
 ## What gets generated per opt-in
 
@@ -138,6 +212,7 @@ After adding `enable_search = True`:
 3. **Web**: hit Ctrl+K on any page → omnibar opens → type term → see your model's results
 4. **CLI**: `uv run python manage.py search_doctor` — should show your model under "Search registry"
 5. **CLI**: `uv run python manage.py search_doctor --explain` — confirms field list and MCP tool name
+6. **CLI · security**: `uv run python manage.py search_doctor --audit` — confirms the model sits at the access level you meant, and shows the audience simulation
 6. **MCP**: `uv run python manage.py mcp_doctor --explain search_<plural>` — confirms tool is registered with the right input schema
 7. **End-to-end**: connect Claude Desktop to your SmallStack instance, ask "find any \<model name\> mentioning \<term\>", verify Claude calls the tool
 

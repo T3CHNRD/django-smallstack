@@ -34,12 +34,28 @@ class SearchPageView(StaffRequiredMixin, TemplateView):
         query = (self.request.GET.get("q") or "").strip()
         limit_per_model = int(self.request.GET.get("limit_per_model") or 10)
 
+        from .access import SearchAccess
+
         ctx["query"] = query
         # StaffRequiredMixin guarantees self.request.user.is_staff here,
         # so the registry's staff gate is a no-op — but we pass the user
         # anyway so the visibility hook (if any) sees the right identity.
         ctx["registered_models"] = view_count()
-        ctx["indexed_sources"] = get_indexed_sources(user=self.request.user)
+        sources = get_indexed_sources(user=self.request.user)
+        ctx["indexed_sources"] = sources
+
+        # Access-level counts for the audit summary in the page header.
+        # Only count model sources (help docs are always-visible regardless).
+        model_sources = [s for s in sources if s["kind"] == "model"]
+        ctx["access_counts"] = {
+            "staff": sum(1 for s in model_sources if s.get("access") == SearchAccess.STAFF),
+            "authenticated": sum(
+                1 for s in model_sources if s.get("access") == SearchAccess.AUTHENTICATED
+            ),
+            "anonymous": sum(
+                1 for s in model_sources if s.get("access") == SearchAccess.ANONYMOUS
+            ),
+        }
 
         if not query:
             ctx["grouped"] = []

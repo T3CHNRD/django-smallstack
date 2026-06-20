@@ -15,6 +15,13 @@
       <strong style="color: var(--body-fg); font-weight: 600;">{{ registered_models }}</strong>
       indexed model{{ registered_models|pluralize }} and the bundled help docs.
     </p>
+    {% if registered_models %}
+    <p class="ssearch-access-summary" title="Run `python manage.py search_doctor --audit` for the full report">
+      <span class="ssearch-access-chip ssearch-access-staff">{{ access_counts.staff }} STAFF</span>
+      <span class="ssearch-access-chip ssearch-access-auth">{{ access_counts.authenticated }} AUTH</span>
+      <span class="ssearch-access-chip ssearch-access-anon">{{ access_counts.anonymous }} PUBLIC</span>
+    </p>
+    {% endif %}
     <nav style="margin-top: 0.5rem; font-size: 0.8rem;">
       <a href="{% url 'website:home' %}" style="color: var(--body-quiet-color); text-decoration: none;">Home</a>
       <span style="color: var(--body-quiet-color); margin: 0 0.3rem;">/</span>
@@ -46,6 +53,70 @@
      page-header-bleed, .card stack, spec-card details rows that
      actually expand. Designed to sit beside Dashboard and Explorer.
      ============================================================ */
+
+  /* ── Access audit (page-header summary + per-row badges) ──────── */
+  .ssearch-access-summary {
+    margin: 0.65rem 0 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+  .ssearch-access-chip {
+    font-family: var(--font-monospace);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--body-fg) 10%, transparent);
+    background: color-mix(in srgb, var(--body-fg) 4%, var(--card-bg));
+    color: var(--body-quiet-color);
+  }
+  .ssearch-access-chip.ssearch-access-staff {
+    /* Staff — warning tint: this is the "safe default" but also the
+       category most likely to leak if mis-configured for end-users. */
+    color: var(--warning-fg);
+    background: color-mix(in srgb, var(--warning-fg) 8%, var(--card-bg));
+    border-color: color-mix(in srgb, var(--warning-fg) 30%, transparent);
+  }
+  .ssearch-access-chip.ssearch-access-auth {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .ssearch-access-chip.ssearch-access-anon {
+    color: var(--success-fg);
+    background: color-mix(in srgb, var(--success-fg) 10%, var(--card-bg));
+    border-color: color-mix(in srgb, var(--success-fg) 30%, transparent);
+  }
+
+  /* Badge next to each spec-card head row, showing that view's access level. */
+  .ssearch-source-access {
+    font-family: var(--font-monospace);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .ssearch-source-access[data-access="staff"] {
+    color: var(--warning-fg);
+    background: color-mix(in srgb, var(--warning-fg) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning-fg) 30%, transparent);
+  }
+  .ssearch-source-access[data-access="authenticated"] {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .ssearch-source-access[data-access="anonymous"] {
+    color: var(--success-fg);
+    background: color-mix(in srgb, var(--success-fg) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--success-fg) 30%, transparent);
+  }
 
   /* ── Summary cards in page-header-bleed (mirrors explorer-stat-card) ─ */
   .ssearch-summary {
@@ -861,6 +932,10 @@
                   </svg>
                   <span class="ssearch-source-kind">{% if source.kind == "help" %}DOC{% else %}MODEL{% endif %}</span>
                   <span class="ssearch-source-tool">{{ source.mcp_tool }}</span>
+                  {% if source.access %}
+                    <span class="ssearch-source-access" data-access="{{ source.access }}"
+                          title="{% if source.access == 'staff' %}Only staff users can find these in cross-model search{% elif source.access == 'authenticated' %}Any signed-in user can find these{% else %}Anyone — including anonymous visitors — can find these{% endif %}">{{ source.access }}</span>
+                  {% endif %}
                   <span class="ssearch-source-title">{{ source.label }}</span>
                   {% if source.total %}<span class="ssearch-source-count">{{ source.total }} {% if source.kind == 'help' %}article{{ source.total|pluralize }}{% else %}record{{ source.total|pluralize }}{% endif %}</span>{% endif %}
                   {% if source.url %}<a href="{{ source.url }}" class="ssearch-source-jump" onclick="event.stopPropagation()">View all →</a>{% endif %}
@@ -884,6 +959,30 @@
                     <div class="section-label">MCP tool</div>
                     <div class="ssearch-signature"><span class="sig-tool">{{ source.mcp_tool }}</span>(<span class="sig-arg-name">query</span>: <span class="sig-type">str</span>, <span class="sig-arg-name">limit</span>: <span class="sig-type">int</span> = 10) <span class="sig-comment"># → ranked hits with display, snippet, url</span></div>
                   </div>
+
+                  {% if source.access %}
+                  <div class="ssearch-source-section">
+                    <div class="section-label">Security · who can find these</div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-monospace); font-size: 0.75rem; color: var(--body-fg); line-height: 1.5;">
+                      <span class="ssearch-source-access" data-access="{{ source.access }}">{{ source.access }}</span>
+                      <span style="color: var(--body-quiet-color);">
+                        {% if source.access == "staff" %}
+                          Only staff users see hits from this source in cross-model search.
+                        {% elif source.access == "authenticated" %}
+                          Any signed-in user sees hits.
+                        {% else %}
+                          Anyone, including signed-out visitors, sees hits.
+                        {% endif %}
+                      </span>
+                    </div>
+                    {% if source.visibility %}
+                      <div style="margin-top: 0.45rem; font-family: var(--font-monospace); font-size: 0.7rem; color: var(--body-quiet-color); line-height: 1.45;">
+                        <span style="color: var(--primary);">visibility</span> = <code style="color: var(--body-fg);">{{ source.visibility }}</code>
+                        <span style="display: block; margin-top: 0.25rem; font-style: italic;">Per-user row filter — runs after the FTS hits, before they ship.</span>
+                      </div>
+                    {% endif %}
+                  </div>
+                  {% endif %}
 
                   {% if source.url %}
                   <div class="ssearch-source-section">
