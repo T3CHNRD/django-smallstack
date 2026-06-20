@@ -27,6 +27,7 @@ class SearchConfig(AppConfig):
         # Step 1: walk every CRUDView in the registry and register the
         # ones opted into search. Same pattern as apps.mcp registering
         # MCP tools from enable_mcp CRUDViews — see apps/mcp/apps.py.
+        # This only populates an in-memory dict — no DB queries fire.
         try:
             from apps.smallstack.crud import CRUDView
 
@@ -41,6 +42,32 @@ class SearchConfig(AppConfig):
                     register(view_cls)
                 except Exception:
                     logger.exception("Failed to register search for %s", view_cls)
+
+        # Step 1.5: hook FTS index creation to post_migrate.
+        # Django warns when DB queries run during AppConfig.ready, so
+        # we defer ensure_index until migrate completes. On normal
+        # invocations (runserver, manage.py commands) the indexes
+        # already exist from a prior `make setup` / `manage.py migrate`,
+        # so deferring is safe.
+        try:
+            from django.db.models.signals import post_migrate
+
+            from .registry import ensure_all_indexes
+
+            def _ensure_indexes_after_migrate(sender, **kwargs):
+                # The handler runs once per AppConfig-with-models on
+                # every `migrate` invocation. ensure_index is idempotent
+                # (CREATE VIRTUAL TABLE IF NOT EXISTS), so repeats are
+                # cheap and correct.
+                ensure_all_indexes()
+
+            post_migrate.connect(
+                _ensure_indexes_after_migrate,
+                dispatch_uid="apps.search.ensure_all_indexes",
+                weak=False,  # don't let GC unregister the closure
+            )
+        except Exception:
+            logger.exception("Failed to hook post_migrate for search indexes")
 
         # Step 2: hook signals so the index stays current as objects are
         # saved or deleted on any registered model.

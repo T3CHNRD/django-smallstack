@@ -71,13 +71,33 @@ def register(view_cls: type) -> IndexedView | None:
     )
     _search_registry[view.model_label] = view
 
-    # Ensure the backend's index structure exists for this view.
+    # Backend index creation is deferred to the post_migrate signal
+    # hooked in SearchConfig.ready(). Doing it here would fire DB
+    # queries during AppConfig.ready(), which Django warns about.
+    # For non-migrate commands, the indexes already exist from a
+    # prior `manage.py migrate` (or `make setup`).
+
+    return view
+
+
+def ensure_all_indexes() -> int:
+    """Create the backend index structure for every registered view.
+
+    Idempotent — safe to call repeatedly. Returns the number of
+    views whose ensure_index succeeded. Hooked to the post_migrate
+    signal so it runs after Django finishes initialization.
+    """
     from .backends import get_backend
 
     backend = get_backend()
-    backend.ensure_index(view)
-
-    return view
+    ok = 0
+    for view in _search_registry.values():
+        try:
+            backend.ensure_index(view)
+            ok += 1
+        except Exception:
+            logger.exception("ensure_index failed for %s", view.model_label)
+    return ok
 
 
 def unregister(view_cls_or_label: type | str) -> None:
