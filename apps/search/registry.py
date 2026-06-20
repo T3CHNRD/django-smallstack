@@ -101,13 +101,44 @@ def get_indexed_sources() -> list[dict]:
     """
     sources: list[dict] = []
     for view in _search_registry.values():
-        # Sample a couple of records' display values as example searches.
+        # Sample recent records to show as a live preview — far more
+        # useful than abstract example strings because users see real
+        # data they can click into.
+        previews: list[dict] = []
         examples: list[str] = []
+        total = 0
         try:
             qs = view.model.objects.all()
-            if view.display_field:
-                values = qs.values_list(view.display_field, flat=True)[:3]
-                examples = [str(v).split()[0] for v in values if v][:2]
+            total = qs.count()
+            recent = list(qs.order_by("-pk")[:5])
+            for obj in recent:
+                display_val = ""
+                if view.display_field:
+                    parts = view.display_field.split("__")
+                    val = obj
+                    for part in parts:
+                        if val is None:
+                            break
+                        val = getattr(val, part, None)
+                    display_val = str(val) if val is not None else str(obj)
+                else:
+                    display_val = str(obj)
+                url = None
+                try:
+                    url = obj.get_absolute_url()
+                except Exception:
+                    pass
+                previews.append({
+                    "display": display_val[:80],
+                    "url": url,
+                    "pk": obj.pk,
+                })
+            # Derive example queries from the previews — take the first
+            # word of each (often a meaningful keyword).
+            for p in previews[:3]:
+                first_word = p["display"].split()[0] if p["display"] else ""
+                if first_word and len(first_word) >= 2:
+                    examples.append(first_word)
         except Exception:
             pass
 
@@ -117,6 +148,8 @@ def get_indexed_sources() -> list[dict]:
             "model_label": view.model_label,
             "fields": view.fields,
             "examples": examples,
+            "previews": previews,
+            "total": total,
             "url": _list_url_for(view),
         })
 
@@ -132,6 +165,8 @@ def get_indexed_sources() -> list[dict]:
                 "model_label": "help.HelpArticle",
                 "fields": ["title", "section", "text"],
                 "examples": ["custom palette", "MCP setup", "API tokens"],
+                "previews": [],
+                "total": n,
                 "url": "/smallstack/help/",
                 "count": n,
             })

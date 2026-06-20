@@ -212,13 +212,26 @@
     color: var(--body-quiet-color);
     letter-spacing: 0.06em;
   }
+  .source-card-jump {
+    margin-left: 0.5rem;
+    font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--primary);
+    text-decoration: none;
+    text-transform: uppercase;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+  }
+  .source-card-jump:hover { opacity: 1; }
+
   .source-card-fields,
   .source-card-examples {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 0.45rem;
-    margin-top: 0.45rem;
+    margin-top: 0.55rem;
   }
   .source-card-fields .fields-label,
   .source-card-examples .examples-label {
@@ -228,6 +241,141 @@
     color: var(--body-quiet-color);
     margin-right: 0.4rem;
   }
+
+  /* ── Live record browser inside a model source card ─────────── */
+  .source-card-section {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid color-mix(in srgb, var(--body-fg) 8%, transparent);
+  }
+  .source-card-section .section-label {
+    font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--body-quiet-color);
+    margin-bottom: 0.5rem;
+  }
+  .preview-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .preview-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px dashed color-mix(in srgb, var(--body-fg) 7%, transparent);
+  }
+  .preview-row:last-child { border-bottom: none; }
+  .preview-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--body-fg);
+    min-width: 0;
+    flex: 1;
+    transition: color 0.15s, padding-left 0.15s;
+  }
+  .preview-link:hover {
+    color: var(--primary);
+    padding-left: 0.2rem;
+  }
+  .preview-arrow {
+    color: var(--body-quiet-color);
+    font-family: ui-serif, Georgia, serif;
+    font-style: italic;
+    font-size: 1rem;
+    transition: color 0.15s;
+    flex: 0 0 auto;
+  }
+  .preview-link:hover .preview-arrow { color: var(--primary); }
+  .preview-text {
+    font-family: ui-serif, "Iowan Old Style", Georgia, serif;
+    font-style: italic;
+    font-size: 0.92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .preview-search {
+    color: var(--body-quiet-color);
+    flex: 0 0 auto;
+    padding: 4px 6px;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 0;
+  }
+  .preview-search:hover {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+
+  /* ── Empty / opt-in hint card ───────────────────────────────── */
+  .source-card-empty {
+    border-left-color: color-mix(in srgb, var(--body-fg) 18%, transparent);
+    background: color-mix(in srgb, var(--body-fg) 2%, var(--card-bg));
+  }
+  .source-card-empty .kind-muted {
+    color: var(--body-quiet-color);
+    background: color-mix(in srgb, var(--body-fg) 8%, var(--card-bg));
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .source-card-title-muted {
+    color: color-mix(in srgb, var(--body-fg) 70%, transparent) !important;
+  }
+  .empty-hint {
+    margin: 0.8rem 0 0.7rem 0;
+    font-size: 0.88rem;
+    color: var(--body-quiet-color);
+    line-height: 1.6;
+  }
+  .empty-hint code,
+  .empty-coda code {
+    font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
+    font-size: 0.82em;
+    color: var(--body-fg);
+    background: color-mix(in srgb, var(--body-fg) 6%, var(--card-bg));
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .empty-snippet {
+    margin: 0.6rem 0;
+    padding: 0.85rem 1rem;
+    background: color-mix(in srgb, var(--body-fg) 5%, var(--card-bg));
+    border: 1px solid color-mix(in srgb, var(--body-fg) 10%, transparent);
+    border-radius: 5px;
+    overflow-x: auto;
+    font-family: var(--font-monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--body-fg);
+  }
+  .empty-snippet code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+  }
+  .empty-coda {
+    margin: 0.6rem 0 0 0;
+    font-size: 0.83rem;
+    color: var(--body-quiet-color);
+    line-height: 1.6;
+  }
+  .empty-coda a {
+    color: var(--primary);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .empty-coda a:hover { border-bottom-color: var(--primary); }
   .source-card-fields code {
     font-family: var(--font-monospace, ui-monospace, Menlo, monospace);
     font-size: 0.75rem;
@@ -642,26 +790,77 @@
       <div class="sources-label">What's<br>indexed</div>
       <div class="sources-list">
         {% for source in indexed_sources %}
-          <div class="source-card">
+          <div class="source-card{% if source.kind == 'model' %} source-card-model{% endif %}">
             <div class="source-card-head">
               <span class="source-card-kind">{% if source.kind == "help" %}DOC{% else %}MODEL{% endif %}</span>
               <span class="source-card-title">{{ source.label }}</span>
-              {% if source.count %}<span class="source-card-count">{{ source.count }} articles</span>{% endif %}
+              {% if source.total %}<span class="source-card-count">{{ source.total }} {% if source.kind == 'help' %}article{{ source.total|pluralize }}{% else %}record{{ source.total|pluralize }}{% endif %}</span>{% endif %}
+              {% if source.url %}<a href="{{ source.url }}" class="source-card-jump">View all →</a>{% endif %}
             </div>
+
             <div class="source-card-fields">
               <span class="fields-label">FIELDS</span>
               {% for field in source.fields %}<code>{{ field }}</code>{% endfor %}
             </div>
+
+            {% if source.previews %}
+              <div class="source-card-section">
+                <div class="section-label">Browse latest</div>
+                <ul class="preview-list">
+                  {% for preview in source.previews %}
+                    <li class="preview-row">
+                      <a href="{{ preview.url|default:'#' }}" class="preview-link">
+                        <span class="preview-arrow">›</span>
+                        <span class="preview-text">{{ preview.display }}</span>
+                      </a>
+                      <a href="?q={{ preview.display|urlencode }}" class="preview-search"
+                         title="Search for this">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                          <path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16
+                                   c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14
+                                   5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                      </a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
             {% if source.examples %}
               <div class="source-card-examples">
-                <span class="examples-label">TRY</span>
+                <span class="examples-label">{% if source.previews %}Or try{% else %}Try{% endif %}</span>
                 {% for ex in source.examples %}
-                  <a href="?q={{ ex }}" class="example-pill">{{ ex }}</a>
+                  <a href="?q={{ ex|urlencode }}" class="example-pill">{{ ex }}</a>
                 {% endfor %}
               </div>
             {% endif %}
           </div>
         {% endfor %}
+
+        {% if registered_models == 0 %}
+          <!-- No models opted in yet — show a clear "how to" hint -->
+          <div class="source-card source-card-empty">
+            <div class="source-card-head">
+              <span class="source-card-kind kind-muted">+ MODELS</span>
+              <span class="source-card-title source-card-title-muted">Add searchable models</span>
+            </div>
+            <p class="empty-hint">
+              No CRUDView has <code>enable_search = True</code> yet. Opt in to
+              the search index from any CRUDView with three lines:
+            </p>
+            <pre class="empty-snippet"><code>class TicketCRUDView(CRUDView):
+    enable_search = True
+    search_fields = ["title", "description"]
+    search_display = "title"</code></pre>
+            <p class="empty-coda">
+              The model joins this index, lights up an MCP
+              <code>search_tickets</code> tool for Claude, and starts appearing
+              here. See
+              <a href="{% url 'help:section_detail' section='smallstack' slug='search' %}">the search docs</a>.
+            </p>
+          </div>
+        {% endif %}
       </div>
     </div>
     {% endif %}
