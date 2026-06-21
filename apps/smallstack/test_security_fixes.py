@@ -67,9 +67,14 @@ def test_backups_page_warns_on_non_sqlite():
 
 
 def test_backups_page_normal_on_sqlite():
-    """On SQLite (the default), the false-assurance warning must NOT appear."""
+    """On SQLite the false-assurance warning must NOT appear. Mock the engine
+    rather than trusting the ambient test DB — under TEST_DB=postgres the real
+    engine is Postgres, so the assertion must not depend on it (see
+    docs/skills/postgres/sqlite-vs-postgres.md)."""
     client = Client()
     client.force_login(_staff("bkstaff2"))
-    resp = client.get(reverse("smallstack:backups"))
+    fake = {"engine": "sqlite3", "is_sqlite": True, "db_path": ":memory:", "db_size": 0}
+    with mock.patch("apps.smallstack.views._get_db_info", return_value=fake):
+        resp = client.get(reverse("smallstack:backups"))
     assert resp.status_code == 200
     assert "not protected by the built-in backup system" not in resp.content.decode()
