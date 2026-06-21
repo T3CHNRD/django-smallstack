@@ -79,6 +79,13 @@ DATABASES = {
 
 ## PostgreSQL
 
+> **Dedicated Postgres skills** (read these for anything beyond the quick config
+> below): [postgres/setup-local.md](postgres/setup-local.md) ·
+> [postgres/production.md](postgres/production.md) ·
+> [postgres/testing.md](postgres/testing.md) ·
+> [postgres/sqlite-vs-postgres.md](postgres/sqlite-vs-postgres.md) (the
+> behavioral differences — FTS tokenization, `varchar` enforcement, ordering).
+
 ### When to Switch
 
 - "database is locked" errors persist even with WAL + IMMEDIATE tuning

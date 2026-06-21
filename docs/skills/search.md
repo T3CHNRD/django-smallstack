@@ -173,6 +173,11 @@ The help-docs are part of the same unified index — a separate `search_help(que
 
 If a user runs your project on MySQL, search still works (fallback) but degrades past ~10k rows. The doctor's WARN row will say so.
 
+> **SQLite vs Postgres FTS behaves slightly differently** (tokenization,
+> especially hyphens; ranking score scale). Before writing search tests or
+> debugging a "matches on SQLite, empty on Postgres" report, read
+> [postgres/sqlite-vs-postgres.md](postgres/sqlite-vs-postgres.md).
+
 ## What to do after enabling
 
 ```bash

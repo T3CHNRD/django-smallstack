@@ -66,6 +66,16 @@ When an AI agent is asked to modify or extend this project, these files help it:
 | [mcp/verify-mcp.md](mcp/verify-mcp.md) | Consolidated verify checklist: doctor, --explain, make mcp-test, admin pages, dashboard widget, Claude Desktop — picks the right path per question |
 | [mcp/configure-mcp.md](mcp/configure-mcp.md) | Scenario → `MCP_*` setting map: turn off OAuth, custom theme, kamal-proxy, multi-tenant, verbose logging, autodiscover |
 
+### Database & PostgreSQL
+
+| File | Description |
+|------|-------------|
+| [database.md](database.md) | Database overview — SQLite default + tuning (WAL/IMMEDIATE), backups, when to switch, SQLite→Postgres data migration |
+| [postgres/setup-local.md](postgres/setup-local.md) | Switch a project to Postgres locally — Docker server, `psycopg` extra, `DATABASES` config, FTS auto-provision on migrate |
+| [postgres/production.md](postgres/production.md) | Postgres in production — driver in the image, `DATABASE_URL`, `CONN_MAX_AGE`/PgBouncer, Kamal accessory, managed services, deploy-time search backfill, `pg_dump` backups (NOT `make backup`) |
+| [postgres/testing.md](postgres/testing.md) | Run the suite on Postgres — `TEST_DB=postgres` switch, the `--extra postgres` gotcha (`make test` can't), expected skip deltas, CI matrix |
+| [postgres/sqlite-vs-postgres.md](postgres/sqlite-vs-postgres.md) | **Read before search/migration/SQL work** — FTS self-provisioning, hyphen tokenization, `varchar` enforcement, query ordering, the "green on SQLite, red on Postgres" checklist |
+
 ## Usage
 
 AI agents should read relevant skill files before making changes to the corresponding parts of the codebase. For example:
@@ -77,6 +87,8 @@ AI agents should read relevant skill files before making changes to the correspo
 - **Before building ANY new page or component → read `modern-dark-theme.md` first** (the v0.9.x canonical patterns supersede earlier guides)
 - Before adding a new color palette → read `modify-palettes.md`
 - Before adding `enable_search = True` to a CRUDView (or building any search-shaped feature) → read `search.md`
+- Before switching a project to PostgreSQL (local, production, or testing) → read `postgres/setup-local.md`, `postgres/production.md`, or `postgres/testing.md`
+- **Before search / data-migration / raw-SQL work that must run on both engines → read `postgres/sqlite-vs-postgres.md`** (the SQLite-passes-Postgres-fails gotchas)
 - Before modifying CSS/theming → read `theming-system.md` for the variable cascade, then `modern-dark-theme.md` for current patterns
 - Before building a new page that should fit the SmallStack theme → read `modern-dark-theme.md` (the canonical patterns)
 - Before adding a custom theme (Bootstrap, Tailwind, etc.) → read `adding-your-own-theme.md`
