@@ -19,12 +19,14 @@ def remap_trigger_values(apps, schema_editor):
     BackupRecord.objects.filter(triggered_by="command").update(triggered_by="_scheduler")
     BackupRecord.objects.filter(triggered_by="manual").update(triggered_by="_command")
     BackupRecord.objects.filter(triggered_by="download").update(triggered_by="_manual")
-    BackupRecord.objects.filter(triggered_by="cron").update(triggered_by="_scheduler2")
+    BackupRecord.objects.filter(triggered_by="cron").update(triggered_by="_sched2")
     # Step 2: set final values
+    # NOTE: temp values must fit max_length=10. Postgres enforces varchar(10)
+    # on the SET literal even when zero rows match; "_scheduler2" (11) overflows.
     BackupRecord.objects.filter(triggered_by="_scheduler").update(triggered_by="scheduler")
     BackupRecord.objects.filter(triggered_by="_command").update(triggered_by="command")
     BackupRecord.objects.filter(triggered_by="_manual").update(triggered_by="manual")
-    BackupRecord.objects.filter(triggered_by="_scheduler2").update(triggered_by="scheduler")
+    BackupRecord.objects.filter(triggered_by="_sched2").update(triggered_by="scheduler")
 
 
 class Migration(migrations.Migration):

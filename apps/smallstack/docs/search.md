@@ -49,7 +49,7 @@ The right backend wires up automatically based on `DATABASES['default']['ENGINE'
 | Database | Backend | Features |
 |---|---|---|
 | SQLite | `SQLiteFTSBackend` (FTS5) | BM25 ranking, porter stemming, phrase queries, prefix `term*` |
-| PostgreSQL | `PostgresFTSBackend` | `SearchVector` + GIN index + `SearchRank`, english config |
+| PostgreSQL | `PostgresFTSBackend` | self-provisioned `tsvector` column + GIN index, `ts_rank` weighting, english config |
 | MySQL / other | `FallbackBackend` | `__icontains` OR (graceful, but slow at scale — recommended: switch to SQLite or Postgres) |
 
 You write the same code regardless of backend. The user-facing query syntax is the same too.
@@ -85,30 +85,31 @@ uv run python manage.py rebuild_search_index --all
 
 ### PostgreSQL
 
-You need a migration that adds the `search_vector` column + GIN index to the model:
+**No migration needed.** Like the SQLite backend, `PostgresFTSBackend`
+self-provisions its index: on every `migrate` it adds a `search_vector tsvector`
+column and a GIN index to each opted-in model's table (idempotently, via
+`ALTER TABLE … ADD COLUMN IF NOT EXISTS` + `CREATE INDEX IF NOT EXISTS`). This
+runs for bundled models (`User`, `APIToken`) and your own alike — you never
+declare a `SearchVectorField` on the model or write a migration for it.
 
-```python
-# Inside your support/migrations/0007_ticket_search_vector.py
-from django.contrib.postgres.indexes import GinIndex
-from django.contrib.postgres.search import SearchVectorField
-from django.db import migrations, models
+Install the driver and the column appears on the next migrate:
 
-class Migration(migrations.Migration):
-    dependencies = [("support", "0006_previous_migration")]
-    operations = [
-        migrations.AddField(
-            model_name="ticket",
-            name="search_vector",
-            field=SearchVectorField(null=True, blank=True),
-        ),
-        migrations.AddIndex(
-            model_name="ticket",
-            index=GinIndex(fields=["search_vector"], name="ticket_search_vector_idx"),
-        ),
-    ]
+```bash
+uv sync --extra postgres          # installs psycopg
+make migrate                      # ensure_index adds the column + GIN index
+uv run python manage.py rebuild_search_index --all   # backfill existing rows
 ```
 
-Then `make migrate && uv run python manage.py rebuild_search_index --all`.
+> **Why not a migration?** A `SearchVectorField` on the model would emit a
+> `tsvector` column type that SQLite (the default backend) can't build, and
+> would make `makemigrations` drift against the runtime-managed column. Owning
+> the index in the backend keeps the same models working on both databases.
+
+> **Hyphen tokenization** differs slightly from SQLite. Postgres FTS stores a
+> hyphenated string (e.g. `acme-prod`) as one compound lexeme *plus* its parts
+> (`acme`, `prod`), so a single-word query matches, but a hyphenated query
+> *fragment* (`prod-x`) is required verbatim. Search whole words for portable
+> behavior across backends.
 
 ## Verifying
 

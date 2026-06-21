@@ -1,19 +1,25 @@
-"""PostgresFTSBackend — full-text search on PostgreSQL via Django's
-``django.contrib.postgres.search`` helpers.
+"""PostgresFTSBackend — full-text search on PostgreSQL via a denormalized
+``tsvector`` column plus a GIN index.
 
-Each indexed view gets a denormalized ``search_vector`` column added by
-migration (the doctor + docs prompt the user to run makemigrations
-after enabling search on a Postgres-backed model). The column is a
-``SearchVectorField`` with a GIN index for fast lookup, kept current
-via signal handlers in ``apps.search.signals``.
+Mirrors the SQLiteFTSBackend's self-provisioning design: the backend owns
+its index structure and creates it at runtime in ``ensure_index`` (hooked
+to ``post_migrate``), rather than relying on per-model Django migrations.
+This keeps the bundled SQLite-default models migration-clean — a
+``SearchVectorField`` on a model would emit a ``tsvector`` column type that
+SQLite can't build, and would make ``makemigrations`` drift against the
+runtime-managed column — while still giving every indexed model (bundled
+*and* downstream) a working Postgres index with zero extra steps.
 
-Ranking uses ``ts_rank`` (the standard Postgres FTS scoring) with
-weighted fields (A > B > C > D from search_weight).
+Storage: one ``search_vector tsvector`` column added to each indexed
+model's own table, kept current by the signal handlers in
+``apps.search.signals`` (which call ``index_object``). Reads and writes use
+raw SQL parameterized on Python-resolved field values — the same strategy
+as the SQLite backend — so ``__`` field paths and unmapped columns work
+uniformly, and the model never needs to declare the column.
 
-Because Postgres FTS is config-aware, SmallStack defaults to the
-``english`` configuration (stemming, stopwords). Users who want a
-different language override per-view via the ``search_config`` class
-attribute (not implemented in v0.11.0 — defaults always english).
+Ranking uses ``ts_rank`` over the weighted vector (A > B > C > D from
+``search_weight``). The text config defaults to ``english`` (stemming +
+stopwords).
 """
 
 from __future__ import annotations
@@ -21,65 +27,86 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from django.db import connection
+
 from .base import IndexedView, SearchHit
 from .fallback import _make_hit, _resolve_field
 
 logger = logging.getLogger("smallstack.search")
 
+# search_weight int → Postgres tsvector weight label. 3 = highest (A).
+_WEIGHT_LABELS = {3: "A", 2: "B", 1: "C", 0: "D"}
+
+# to_postgres() search_type → the tsquery constructor that parses it.
+_TSQUERY_FUNCS = {
+    "plain": "plainto_tsquery",
+    "phrase": "phraseto_tsquery",
+    "raw": "to_tsquery",
+}
+
 
 class PostgresFTSBackend:
     name = "postgresql-fts"
 
-    # PG-FTS expects the search_vector column to exist on the model
-    # (created by a migration). We don't auto-create it because Django
-    # migrations are the right place; the user runs makemigrations
-    # after opting in. The doctor surfaces a clear error if missing.
-
     # ---- index lifecycle -------------------------------------------------
 
     def ensure_index(self, view: IndexedView) -> None:
-        # No-op: the search_vector column + GIN index are managed by
-        # Django migrations, not runtime DDL.
-        pass
+        """Add the ``search_vector`` column + GIN index if absent.
+
+        Idempotent (``IF NOT EXISTS`` on both statements), so it is safe to
+        run on every ``post_migrate``. Self-provisioning here — rather than
+        via a model field + migration — is what lets the bundled
+        SQLite-default models opt into Postgres FTS without shipping a
+        ``tsvector`` column that SQLite can't create.
+        """
+        table = view.model._meta.db_table
+        index = _gin_index_name(view)
+        with connection.cursor() as cur:
+            try:
+                cur.execute(
+                    f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS search_vector tsvector'
+                )
+                cur.execute(
+                    f'CREATE INDEX IF NOT EXISTS "{index}" '
+                    f'ON "{table}" USING GIN (search_vector)'
+                )
+            except Exception:
+                logger.exception("PG-FTS ensure_index failed for %s", view.model_label)
 
     def index_object(self, view: IndexedView, obj: Any) -> None:
-        """Update the search_vector column for this row.
+        """Recompute the row's ``search_vector`` from its search fields.
 
-        Uses Django's ``SearchVector`` to assemble the weighted vector
-        from the configured fields. The model must have a
-        ``search_vector`` column (added via migration).
+        Field text is resolved in Python (so ``__`` paths work) and passed
+        as bound parameters; the weight labels come from a fixed map and are
+        inlined into the SQL (no user input reaches the statement text).
         """
-        from django.contrib.postgres.search import SearchVector
-        from django.db.models import Value
-        from django.db.models.functions import Coalesce
-
-        weight_map = {3: "A", 2: "B", 1: "C", 0: "D"}
-        parts = []
-        for field_name in view.fields:
-            weight_int = view.weights.get(field_name, 1)
-            weight = weight_map.get(max(0, min(weight_int, 3)), "C")
-            parts.append(SearchVector(
-                Coalesce(field_name, Value("")),
-                weight=weight,
-                config="english",
-            ))
-        if not parts:
+        if not view.fields:
             return
+        table = view.model._meta.db_table
+        pk_col = view.model._meta.pk.column
 
-        vector = parts[0]
-        for p in parts[1:]:
-            vector = vector + p
+        parts = []
+        params: list[Any] = []
+        for field_name in view.fields:
+            label = _WEIGHT_LABELS.get(_clamp_weight(view.weights.get(field_name, 1)), "C")
+            parts.append(f"setweight(to_tsvector('english', %s), '{label}')")
+            params.append(str(_resolve_field(obj, field_name) or ""))
+        set_expr = " || ".join(parts)
+        params.append(obj.pk)
 
+        sql = f'UPDATE "{table}" SET search_vector = {set_expr} WHERE "{pk_col}" = %s'
         try:
-            view.model.objects.filter(pk=obj.pk).update(search_vector=vector)
+            with connection.cursor() as cur:
+                cur.execute(sql, params)
         except Exception:
             logger.exception("PG-FTS index_object failed for %s/%s", view.model_label, obj.pk)
 
     def remove_object(self, view: IndexedView, object_id: int) -> None:
-        # When the row is deleted the vector goes with it. Nothing to do.
+        # The vector lives on the model row; deleting the row drops it.
         pass
 
     def rebuild(self, view: IndexedView) -> int:
+        self.ensure_index(view)
         count = 0
         for obj in view.model.objects.all().iterator(chunk_size=500):
             self.index_object(view, obj)
@@ -89,32 +116,60 @@ class PostgresFTSBackend:
     # ---- query -----------------------------------------------------------
 
     def query(self, view: IndexedView, query: str, limit: int = 10) -> list[SearchHit]:
-        from django.contrib.postgres.search import SearchQuery, SearchRank
-
         from ..query_parser import to_postgres
 
         translated, search_type = to_postgres(query)
         if not translated:
             return []
 
-        sq = SearchQuery(translated, config="english", search_type=search_type)
-        try:
-            qs = (
-                view.model.objects
-                .annotate(_rank=SearchRank("search_vector", sq))
-                .filter(search_vector=sq)
-                .order_by("-_rank")[:limit]
-            )
-            results = list(qs)
-        except Exception:
-            logger.exception("PG-FTS query failed for %s: %r", view.model_label, query)
+        table = view.model._meta.db_table
+        pk_col = view.model._meta.pk.column
+        tsquery_fn = _TSQUERY_FUNCS.get(search_type, "plainto_tsquery")
+
+        sql = (
+            f'SELECT "{pk_col}" AS object_id, ts_rank(search_vector, q) AS rank '
+            f"FROM \"{table}\", {tsquery_fn}('english', %s) AS q "
+            f"WHERE search_vector @@ q "
+            f"ORDER BY rank DESC LIMIT %s"
+        )
+
+        with connection.cursor() as cur:
+            try:
+                cur.execute(sql, [translated, limit])
+                rows = cur.fetchall()
+            except Exception:
+                logger.exception("PG-FTS query failed for %s: %r", view.model_label, query)
+                return []
+
+        if not rows:
             return []
 
+        # Re-hydrate objects in one query and preserve rank ordering.
+        ids = [r[0] for r in rows]
+        rank_by_id = {r[0]: r[1] for r in rows}
+        objects_by_id = {o.pk: o for o in view.model.objects.filter(pk__in=ids)}
+
         hits: list[SearchHit] = []
-        for obj in results:
+        for obj_id in ids:
+            obj = objects_by_id.get(obj_id)
+            if not obj:
+                continue
             snippet = _build_snippet_pg(view, obj, query)
-            hits.append(_make_hit(view, obj, rank=float(obj._rank), snippet=snippet))
+            hits.append(_make_hit(view, obj, rank=float(rank_by_id[obj_id]), snippet=snippet))
         return hits
+
+
+# ---- helpers -------------------------------------------------------------
+
+
+def _gin_index_name(view: IndexedView) -> str:
+    """GIN index name for a view's table, capped at Postgres' 63-char limit."""
+    base = f"{view.model._meta.db_table}_svec_gin"
+    return base[:63]
+
+
+def _clamp_weight(weight_int: int) -> int:
+    return max(0, min(int(weight_int), 3))
 
 
 def _build_snippet_pg(view: IndexedView, obj: Any, query: str) -> str:

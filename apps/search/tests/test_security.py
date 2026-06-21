@@ -223,8 +223,13 @@ def test_visibility_filter_scopes_rows_per_user():
     User.objects.create_user(username="bob-needle-zz", password="x")
     _rebuild_indexes()
 
-    # Alice searches for the shared "needle" — sees only herself.
-    hits = search_all("needle-zz", user=alice)
+    # Alice searches the shared token — sees only herself. Space-separated
+    # ("needle zz" not "needle-zz") so the *partial* match is backend-neutral:
+    # Postgres FTS stores a hyphenated string as one compound lexeme, so a
+    # hyphenated query fragment won't match the longer "alice-needle-zz"
+    # compound. Splitting on the space matches via the shared part-lexemes,
+    # which both SQLite FTS5 and Postgres produce identically.
+    hits = search_all("needle zz", user=alice)
     displays = {h.display for h in hits}
     assert "alice-needle-zz" in displays
     assert "bob-needle-zz" not in displays
@@ -244,7 +249,9 @@ def test_visibility_filter_does_not_apply_to_staff():
     _rebuild_indexes()
 
     staff = User.objects.create_user(username="staff_x", password="x", is_staff=True)
-    hits = search_all("needle-zz", user=staff)
+    # Space-separated shared token — backend-neutral partial match (see note in
+    # test_visibility_filter_scopes_rows_per_user).
+    hits = search_all("needle zz", user=staff)
     displays = {h.display for h in hits}
     # Staff sees BOTH alice and bob despite the per-user filter on the view.
     assert "alice-needle-zz" in displays
@@ -284,7 +291,9 @@ def test_visibility_filter_runs_for_anonymous_access_view():
     User.objects.create_user(username="inactive-anon-needle-zz", is_active=False)
     _rebuild_indexes()
 
-    hits = search_all("anon-needle-zz", user=AnonymousUser())
+    # Space-separated shared token — backend-neutral partial match (see note in
+    # test_visibility_filter_scopes_rows_per_user).
+    hits = search_all("anon needle zz", user=AnonymousUser())
     displays = {h.display for h in hits}
     assert "active-anon-needle-zz" in displays
     assert "inactive-anon-needle-zz" not in displays

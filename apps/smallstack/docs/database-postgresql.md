@@ -227,6 +227,26 @@ uv run python manage.py shell
 >>> get_user_model().objects.count()
 ```
 
+## Full-Text Search
+
+SmallStack's keyword search (any CRUDView with `enable_search = True`) runs on
+Postgres FTS automatically once `psycopg` is installed — `DATABASES['default']`
+selects `PostgresFTSBackend`. You **don't** write a migration: the backend
+self-provisions a `search_vector tsvector` column and a GIN index on each
+indexed model's table at every `migrate` (idempotently), for the bundled
+`User`/`APIToken` models and your own alike.
+
+```bash
+uv sync --extra postgres                              # install the driver
+make migrate                                          # adds the column + GIN index
+uv run python manage.py rebuild_search_index --all    # backfill existing rows
+uv run python manage.py search_doctor                 # confirm backend = postgresql-fts
+```
+
+See [Search](/help/smallstack/search/) for the full opt-in guide, including the
+one cross-backend wrinkle (hyphenated query *fragments* match differently than
+on SQLite).
+
 ## Production Deployment
 
 ### With Kamal

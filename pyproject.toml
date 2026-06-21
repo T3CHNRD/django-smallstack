@@ -31,6 +31,11 @@ dev = [
     "ruff>=0.1",
     "openapi-spec-validator>=0.7",
 ]
+# PostgreSQL driver — install with `uv sync --extra postgres` (or --all-extras)
+# when running SmallStack on Postgres. SQLite (the default) needs nothing here.
+postgres = [
+    "psycopg[binary]>=3.1",
+]
 
 [tool.ruff]
 line-length = 120

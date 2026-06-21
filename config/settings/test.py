@@ -4,6 +4,7 @@ Test settings for smallstack project.
 Inherits from development but disables debug toolbar to avoid URL namespace issues.
 """
 
+import os
 import warnings
 
 from .base import *  # noqa: F401, F403
@@ -19,13 +20,28 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "testserver"]
 
-# Database - use SQLite for fast tests
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
+# Database. Defaults to in-memory SQLite for fast tests. Set TEST_DB=postgres
+# to exercise the Postgres path (FTS, varchar enforcement, etc.) — e.g.
+# `TEST_DB=postgres make test`. Requires a running Postgres and the
+# `postgres` extra (`uv sync --extra postgres`); CI runs both backends.
+if os.environ.get("TEST_DB") == "postgres":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("TEST_DB_NAME", "smallstack_test"),
+            "USER": os.environ.get("TEST_DB_USER", "postgres"),
+            "PASSWORD": os.environ.get("TEST_DB_PASSWORD", "postgres"),
+            "HOST": os.environ.get("TEST_DB_HOST", "localhost"),
+            "PORT": os.environ.get("TEST_DB_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
 
 # Password hashers - use fast hasher for tests
 PASSWORD_HASHERS = [

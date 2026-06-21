@@ -41,7 +41,7 @@ class TicketCRUDView(CRUDView):
 
 That's enough. You get:
 
-- An FTS5 virtual table (SQLite) or a search_vector column (Postgres — needs a migration)
+- An FTS5 virtual table (SQLite) or a `search_vector` column + GIN index (Postgres) — self-provisioned at migrate, no migration to write
 - A `search_tickets(query, limit)` MCP tool registered with the MCP server
 - Ticket results in the topbar omnibar (Ctrl+K) + `/smallstack/search/?q=` page
 
@@ -143,7 +143,7 @@ It also appears live on `/smallstack/search/` — the colored chips under the pa
 When `apps.search` is in `INSTALLED_APPS` and a CRUDView has `enable_search = True`:
 
 1. **SearchConfig.ready()** registers the view in `_search_registry`
-2. **The active backend** creates the index structure (FTS5 table on SQLite, no-op on Postgres because the column comes from migration)
+2. **The active backend** creates the index structure at `post_migrate` (FTS5 virtual table on SQLite; `search_vector` column + GIN index on Postgres — both self-provisioned, no migration)
 3. **post_save / post_delete signals** keep the index current
 4. **MCP tool factory** registers `search_<plural>(query, limit)` in `TOOL_REGISTRY`
 5. **Results appear** in the global search page, omnibar JSON, and Claude's tool list
@@ -168,7 +168,7 @@ The help-docs are part of the same unified index — a separate `search_help(que
 | DB engine | Backend | Notes |
 |---|---|---|
 | `sqlite3` | `SQLiteFTSBackend` | FTS5 virtual table, BM25, porter stemming, prefix `term*` |
-| `postgresql` | `PostgresFTSBackend` | Needs migration to add `search_vector` column + GIN index |
+| `postgresql` | `PostgresFTSBackend` | Self-provisions `search_vector` column + GIN index at `post_migrate` (no migration); ts_rank, english config |
 | anything else | `FallbackBackend` | `__icontains` OR — slow at scale, no ranking, no operators |
 
 If a user runs your project on MySQL, search still works (fallback) but degrades past ~10k rows. The doctor's WARN row will say so.
@@ -176,12 +176,15 @@ If a user runs your project on MySQL, search still works (fallback) but degrades
 ## What to do after enabling
 
 ```bash
-# SQLite: nothing required if you just added the model — but if rows
-# existed before you opted in, populate the index:
+# SQLite & Postgres: nothing required if you just added the model — the
+# backend self-provisions its index on the next migrate. If rows existed
+# before you opted in, backfill the index:
 uv run python manage.py rebuild_search_index <app_label>.<Model>
 
-# Postgres: you need a migration first
-uv run python manage.py makemigrations <app_label>
+# Postgres only: install the driver (once) so the backend is active.
+# The search_vector column + GIN index are created automatically at migrate —
+# no makemigrations, no SearchVectorField on the model.
+uv sync --extra postgres
 uv run python manage.py migrate
 uv run python manage.py rebuild_search_index --all
 
