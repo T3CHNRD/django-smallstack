@@ -168,6 +168,43 @@ class TestPruneBackups:
 
         assert pruned == []
 
+    def test_prune_keep_zero_is_disabled_not_delete_all(self, db, tmp_path):
+        """Audit L8: keep<1 means retention disabled — it must NOT delete every
+        backup (including the one just created)."""
+        from .views import _prune_backups
+
+        for i in range(3):
+            (tmp_path / f"db-20260301-00000{i}.sqlite3").write_bytes(b"x" * 100)
+
+        with override_settings(BACKUP_DIR=str(tmp_path)):
+            pruned = _prune_backups(keep=0)
+
+        assert pruned == []
+        assert len(list(tmp_path.glob("db-*.sqlite3"))) == 3
+
+
+class TestBackupDbCommand:
+    """Tests for the backup_db management command."""
+
+    def test_records_skip_on_non_sqlite(self, db):
+        """Audit L7: on a non-SQLite engine the command must record a failed
+        BackupRecord (not silently no-op), so the dashboard isn't misread as
+        healthy."""
+        from unittest import mock
+
+        from django.conf import settings
+        from django.core.management import call_command
+
+        before = BackupRecord.objects.count()
+        with mock.patch.dict(
+            settings.DATABASES["default"], {"ENGINE": "django.db.backends.postgresql"}
+        ):
+            call_command("backup_db")
+        assert BackupRecord.objects.count() == before + 1
+        rec = BackupRecord.objects.latest("id")
+        assert rec.status == "failed"
+        assert "only supports SQLite" in rec.error_message
+
 
 # ── View Permission Tests ────────────────────────────────────
 

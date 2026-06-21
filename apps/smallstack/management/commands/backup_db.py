@@ -36,11 +36,32 @@ class Command(BaseCommand):
         engine = db["ENGINE"]
 
         if "sqlite3" not in engine:
-            self.stderr.write(
-                self.style.ERROR(
-                    "This command only supports SQLite databases. PostgreSQL backup is coming in a future release."
-                )
+            # Record the skip so an unattended cron doesn't leave an empty
+            # history that reads as "healthy". The Failed card + admin notify
+            # now reflect that this engine isn't backed up. (Audit L7.)
+            msg = (
+                f"Backup skipped: the built-in backup system only supports SQLite, but this "
+                f"database runs on {engine.split('.')[-1]}. Use pg_dump or your managed "
+                f"provider's snapshots."
             )
+            BackupRecord.objects.create(
+                filename="",
+                file_size=0,
+                duration_ms=0,
+                status="failed",
+                error_message=msg,
+                triggered_by="scheduler",
+            )
+            self.stderr.write(self.style.ERROR(msg))
+            if getattr(settings, "ADMINS", []):
+                try:
+                    mail_admins(
+                        subject="Database backup skipped (non-SQLite engine)",
+                        message=msg,
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
             return
 
         db_path = db["NAME"]

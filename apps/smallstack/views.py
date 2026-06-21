@@ -61,7 +61,10 @@ def _prune_backups(triggered_by: str = "manual", keep: int | None = None) -> lis
 
     if keep is None:
         keep = getattr(settings, "BACKUP_RETENTION", None)
-    if keep is None:
+    # keep < 1 means "retention disabled" — keep everything. Treating 0 as a
+    # real count made backups[keep:] = backups[0:] = ALL files, deleting the
+    # just-created backup (then a 500 on download). (Audit L8.)
+    if keep is None or keep < 1:
         return []
 
     backup_dir = Path(getattr(settings, "BACKUP_DIR", settings.BASE_DIR / "backups"))
@@ -349,6 +352,13 @@ class BackupDownloadView(StaffRequiredMixin, View):
 
         backup_dir = Path(getattr(settings, "BACKUP_DIR", settings.BASE_DIR / "backups"))
         file_path = backup_dir / record.filename
+
+        # Guard existence before opening — a misconfigured retention (keep<1)
+        # or a concurrent prune could remove the file between create and read.
+        # (Audit L8; mirrors BackupFileDownloadView's existing check.)
+        if not file_path.exists():
+            messages.error(request, "Backup file is no longer available.")
+            return redirect("smallstack:backups")
 
         response = FileResponse(open(file_path, "rb"), content_type="application/x-sqlite3")
         response["Content-Disposition"] = f'attachment; filename="{record.filename}"'
