@@ -196,6 +196,59 @@ def test_token_rejects_redirect_uri_mismatch():
     assert resp.json()["error"] == "invalid_grant"
 
 
+def _authorize_allow(client, scope="read"):
+    return client.post(
+        "/mcp/oauth/authorize",
+        {
+            "client_id": "mcp_x", "redirect_uri": "https://claude.ai/cb",
+            "code_challenge": "abc", "code_challenge_method": "S256",
+            "state": "s", "scope": scope, "decision": "allow",
+        },
+        HTTP_HOST="localhost",
+    )
+
+
+def test_oauth_non_staff_write_scope_capped_to_readonly():
+    """Audit M1: a non-staff user granting write scope must NOT receive a
+    staff-tier token (mirrors tokenmgr — non-staff get read-only)."""
+    user = User.objects.create_user(username="u_m1a", password="p")  # not staff
+    client = Client()
+    client.force_login(user)
+    _authorize_allow(client, scope="write")
+    tok = APIToken.objects.filter(user=user).latest("id")
+    assert tok.access_level == "readonly"
+
+
+def test_oauth_staff_write_scope_gets_staff():
+    """A staff user granting write scope still gets a staff-tier token."""
+    user = User.objects.create_user(username="u_m1b", password="p", is_staff=True)
+    client = Client()
+    client.force_login(user)
+    _authorize_allow(client, scope="write")
+    tok = APIToken.objects.filter(user=user).latest("id")
+    assert tok.access_level == "staff"
+
+
+def test_code_redemption_atomic_claim_single_winner():
+    """Audit M2/L11: redemption claims the code with a conditional UPDATE
+    (WHERE used_at IS NULL), so two concurrent claims yield exactly one
+    winner — the loser cannot also mint a token."""
+    user = User.objects.create_user(username="u_m2", password="p")
+    client = Client()
+    client.force_login(user)
+    auth = _authorize_allow(client)
+    code = auth["Location"].split("code=")[1].split("&")[0]
+    row = OAuthAuthorizationCode.objects.get(code=code)
+
+    first = OAuthAuthorizationCode.objects.filter(pk=row.pk, used_at__isnull=True).update(
+        used_at=timezone.now()
+    )
+    second = OAuthAuthorizationCode.objects.filter(pk=row.pk, used_at__isnull=True).update(
+        used_at=timezone.now()
+    )
+    assert (first, second) == (1, 0)
+
+
 def test_full_token_exchange_yields_bearer():
     user = User.objects.create_user(username="u4", password="p")
     client = Client()

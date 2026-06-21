@@ -257,9 +257,13 @@ class AuthorizeView(View):
             )
             return redirect(f"{redirect_uri}{sep}{qs}")
 
-        # Mint APIToken (access_level depends on requested scope)
+        # Mint APIToken. Cap access_level by the user's role — mirror
+        # tokenmgr's clean_access_level so OAuth can't hand a non-staff user a
+        # staff-tier token just because they asked for write scope. Non-staff
+        # users get read-only (consistent with the self-service token UI). (Audit M1.)
         prefix = getattr(settings, "MCP_TOKEN_NAME_PREFIX", "MCP")
-        access_level = "staff" if "write" in scope.split() else "readonly"
+        wants_write = "write" in scope.split()
+        access_level = "staff" if (wants_write and request.user.is_staff) else "readonly"
         token, raw_key = APIToken.create_token(
             user=request.user,
             name=f"{prefix} — {client_id}",
@@ -355,15 +359,23 @@ def token(request: HttpRequest) -> JsonResponse:
         )
 
     raw_key = row.raw_key
+
+    # One-shot: atomically claim the code. A single conditional UPDATE
+    # (WHERE used_at IS NULL) is the source of truth, so two concurrent
+    # redemptions can't both pass the check-then-act window above — exactly one
+    # wins and the loser gets invalid_grant (RFC 6749 §4.1.2). (Audit M2.)
+    claimed = OAuthAuthorizationCode.objects.filter(
+        pk=row.pk, used_at__isnull=True
+    ).update(used_at=timezone.now(), raw_key="")
+    if not claimed:
+        logger.warning("OAUTH TOKEN reject reason=code_reused_race client_id=%s", client_id)
+        return JsonResponse(
+            {"error": "invalid_grant", "error_description": "Code already used"}, status=400
+        )
     if not raw_key:
         return JsonResponse(
             {"error": "invalid_grant", "error_description": "Key already revealed"}, status=400
         )
-
-    # One-shot: mark used, wipe the raw key.
-    row.used_at = timezone.now()
-    row.raw_key = ""
-    row.save(update_fields=["used_at", "raw_key"])
 
     logger.info(
         "OAUTH TOKEN issued user_pk=%s token_pk=%s scope=%s",
