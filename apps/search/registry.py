@@ -93,8 +93,8 @@ def ensure_all_indexes() -> int:
     ok = 0
     for view in _search_registry.values():
         try:
-            backend.ensure_index(view)
-            ok += 1
+            if backend.ensure_index(view):
+                ok += 1
         except Exception:
             logger.exception("ensure_index failed for %s", view.model_label)
     return ok

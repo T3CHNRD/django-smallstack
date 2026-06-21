@@ -24,6 +24,7 @@ stopwords).
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from typing import Any
 
@@ -50,7 +51,7 @@ class PostgresFTSBackend:
 
     # ---- index lifecycle -------------------------------------------------
 
-    def ensure_index(self, view: IndexedView) -> None:
+    def ensure_index(self, view: IndexedView) -> bool:
         """Add the ``search_vector`` column + GIN index if absent.
 
         Idempotent (``IF NOT EXISTS`` on both statements), so it is safe to
@@ -72,6 +73,8 @@ class PostgresFTSBackend:
                 )
             except Exception:
                 logger.exception("PG-FTS ensure_index failed for %s", view.model_label)
+                return False
+        return True
 
     def index_object(self, view: IndexedView, obj: Any) -> None:
         """Recompute the row's ``search_vector`` from its search fields.
@@ -163,9 +166,15 @@ class PostgresFTSBackend:
 
 
 def _gin_index_name(view: IndexedView) -> str:
-    """GIN index name for a view's table, capped at Postgres' 63-char limit."""
-    base = f"{view.model._meta.db_table}_svec_gin"
-    return base[:63]
+    """Collision-resistant GIN index name within Postgres' 63-byte identifier
+    limit. A plain ``<table>_svec_gin`` prefix-truncation could map two tables
+    that share a 63-char prefix to the same index name, silently leaving the
+    second table un-indexed (``CREATE INDEX IF NOT EXISTS`` keys on the name).
+    Append a hash of the full table name so the result is unique. (Audit L1.)
+    """
+    table = view.model._meta.db_table
+    digest = hashlib.md5(table.encode()).hexdigest()[:12]
+    return f"svecgin_{table[:40]}_{digest}"
 
 
 def _clamp_weight(weight_int: int) -> int:

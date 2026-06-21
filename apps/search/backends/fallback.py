@@ -24,9 +24,9 @@ from .base import IndexedView, SearchHit
 class FallbackBackend:
     name = "fallback (__icontains)"
 
-    def ensure_index(self, view: IndexedView) -> None:
-        # No index — nothing to ensure.
-        pass
+    def ensure_index(self, view: IndexedView) -> bool:
+        # No index — nothing to ensure; trivially "ready".
+        return True
 
     def index_object(self, view: IndexedView, obj: Any) -> None:
         # No index — nothing to maintain.

@@ -30,7 +30,7 @@ class SQLiteFTSBackend:
 
     # ---- index lifecycle -------------------------------------------------
 
-    def ensure_index(self, view: IndexedView) -> None:
+    def ensure_index(self, view: IndexedView) -> bool:
         table = _fts_table(view)
         columns = ", ".join(view.fields)
         sql = (
@@ -42,6 +42,8 @@ class SQLiteFTSBackend:
                 cur.execute(sql)
             except Exception:
                 logger.exception("ensure_index failed for %s", view.model_label)
+                return False
+        return True
 
     def index_object(self, view: IndexedView, obj: Any) -> None:
         table = _fts_table(view)

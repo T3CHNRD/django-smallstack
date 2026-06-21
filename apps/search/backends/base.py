@@ -107,11 +107,13 @@ class SearchBackend(Protocol):
 
     name: str  # human-readable backend name for diagnostics
 
-    def ensure_index(self, view: IndexedView) -> None:
+    def ensure_index(self, view: IndexedView) -> bool:
         """Create/migrate the index structure for an indexed view.
 
         Called once per registered view at startup. Idempotent — backends
-        check whether the index already exists before creating.
+        check whether the index already exists before creating. Returns True
+        on success, False if provisioning failed (so callers can count real
+        successes rather than "didn't raise").
         """
         ...
 

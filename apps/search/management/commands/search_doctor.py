@@ -167,7 +167,13 @@ class Command(BaseCommand):
         })
 
     def _check_index_health(self, report):
-        """Spot-check one indexed view: can we issue a query without error?"""
+        """Check EVERY indexed view: can we issue a query without error?
+
+        Iterating all views (not just the first) is what surfaces a model whose
+        index didn't provision — e.g. a Postgres model added to the registry
+        before `migrate`/`rebuild_search_index` ran, whose missing search_vector
+        column makes its query silently return []. (Audit I2.)
+        """
         from apps.search.backends import get_backend
         from apps.search.registry import all_views
 
@@ -175,20 +181,26 @@ class Command(BaseCommand):
         if not views:
             return
         backend = get_backend()
-        for view in views[:1]:
+        failed = []
+        for view in views:
             try:
                 backend.query(view, "smoke-test-query-zz", limit=1)
             except Exception as exc:
-                report.append({
-                    "name": f"Index health ({view.model_label})",
-                    "status": "FAIL",
-                    "detail": f"Query failed: {exc}. Try `manage.py rebuild_search_index --all`.",
-                })
-                return
+                failed.append(f"{view.model_label}: {exc}")
+        if failed:
+            report.append({
+                "name": "Index health",
+                "status": "FAIL",
+                "detail": (
+                    f"{len(failed)}/{len(views)} view(s) failed to query "
+                    f"({'; '.join(failed)}). Try `manage.py rebuild_search_index --all`."
+                ),
+            })
+            return
         report.append({
             "name": "Index health",
             "status": "PASS",
-            "detail": f"Spot-checked {views[0].model_label} — query returned",
+            "detail": f"Checked all {len(views)} view(s) — queries returned",
         })
 
     # ---- --explain ------------------------------------------------------
