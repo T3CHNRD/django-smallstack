@@ -208,6 +208,81 @@ def test_tools_list_filters_out_write_tools_for_readonly_caller(readonly_token):
     assert "write_probe" not in names
 
 
+def test_tools_list_respects_visible_to_callback(readonly_token):
+    """When a tool declares ``visible_to=(user) -> bool``, tools/list MUST
+    include it when the callback returns True.
+
+    This + the next test pin the gate that closes the round-2 audit §3.3
+    carry-over: search_users used to appear in alice's tools/list as
+    "visible-but-non-functional" because check_tool_access only saw the
+    flat ``requires_access="readonly"`` and not the underlying view's
+    ``search_access=STAFF`` tier. visible_to lifts the per-view gate to
+    the listing layer."""
+
+    @tool(
+        "always_visible_probe",
+        "Tool whose visible_to always returns True",
+        input_schema={"type": "object", "properties": {}},
+        visible_to=lambda u: True,
+    )
+    async def always_visible_probe(args):
+        return {"ok": True}
+
+    _, raw = readonly_token
+    resp = _post(
+        Client(),
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        HTTP_AUTHORIZATION=f"Bearer {raw}",
+    )
+    names = [t["name"] for t in resp.json()["result"]["tools"]]
+    assert "always_visible_probe" in names
+
+
+def test_tools_list_hides_tool_when_visible_to_returns_false(readonly_token):
+    """The negative case: visible_to returns False → the tool is omitted."""
+
+    @tool(
+        "never_visible_probe",
+        "Tool whose visible_to always returns False",
+        input_schema={"type": "object", "properties": {}},
+        visible_to=lambda u: False,
+    )
+    async def never_visible_probe(args):
+        return {"ok": True}
+
+    _, raw = readonly_token
+    resp = _post(
+        Client(),
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        HTTP_AUTHORIZATION=f"Bearer {raw}",
+    )
+    names = [t["name"] for t in resp.json()["result"]["tools"]]
+    assert "never_visible_probe" not in names
+
+
+def test_tools_list_visible_to_callback_fails_safe(readonly_token):
+    """Round-4 hardening: a raising visible_to callback hides the tool
+    from the list rather than exposing it — fail-safe under bugs."""
+
+    @tool(
+        "buggy_visibility",
+        "Tool with a buggy visibility check",
+        input_schema={"type": "object", "properties": {}},
+        visible_to=lambda u: 1 / 0,   # will raise ZeroDivisionError
+    )
+    async def buggy_visibility(args):
+        return {"ok": True}
+
+    _, raw = readonly_token
+    resp = _post(
+        Client(),
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        HTTP_AUTHORIZATION=f"Bearer {raw}",
+    )
+    names = [t["name"] for t in resp.json()["result"]["tools"]]
+    assert "buggy_visibility" not in names
+
+
 def test_unknown_tool_call_returns_method_not_found(readonly_token):
     _, raw = readonly_token
     resp = _post(

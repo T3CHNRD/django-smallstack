@@ -40,6 +40,18 @@ class ToolDef:
     input_schema: dict[str, Any] = field(default_factory=lambda: {"type": "object", "properties": {}})
     write: bool = False
     requires_access: Optional[str] = None  # "readonly" | "staff" | "auth" | None
+    # Optional callable applied at tools/list time. ``(user) -> bool``.
+    # When set and it returns False, the tool is hidden from that user's
+    # tools/list response. Useful for tools where the access decision
+    # isn't expressible as a flat ``requires_access`` level — the search
+    # MCP tools (round-2 audit §3.3) gate by the underlying view's
+    # ``search_access`` tier, which check_tool_access can't see. Without
+    # this hook the tool was visible-but-non-functional to non-staff
+    # callers — they saw ``search_users`` in the list and got
+    # ``{"denied": true}`` on call. Returning False here hides it
+    # from the list AND tools/call's existing check_tool_access still
+    # gates the call itself (defense in depth).
+    visible_to: Optional[Callable[[Any], bool]] = None
 
 
 # Module-level registries — populated by @tool, read by views.py + factory.
@@ -54,6 +66,7 @@ def tool(
     *,
     write: bool = False,
     requires_access: str | None = None,
+    visible_to: Callable[[Any], bool] | None = None,
 ) -> Callable[[Callable], Callable]:
     """Register an async tool callback with the MCP server.
 
@@ -77,6 +90,7 @@ def tool(
             input_schema=input_schema or {"type": "object", "properties": {}},
             write=write,
             requires_access=requires_access,
+            visible_to=visible_to,
         )
         TOOL_HANDLERS[name] = fn
         logger.debug("MCP registered tool %r (write=%s, requires=%s)", name, write, requires_access)

@@ -203,21 +203,39 @@ class McpHttpView(View):
             if method == "tools/list":
                 # Round-2 surfaces audit §3.3 follow-up + quality review:
                 # filter tools/list so the caller only sees tools their
-                # token is actually allowed to invoke. Hides write tools
-                # from readonly tokens and staff-required tools from
-                # non-staff tokens — the audit's "tool-name leak" concern,
-                # plus a real LLM-surface-noise win when an end-user
-                # token sees only the four tools it can call instead of
-                # all 13 registered ones.
-                tools = [
-                    {
+                # token is actually allowed to invoke. Two checks:
+                #
+                # 1. check_tool_access — same gate used at call time, plus
+                #    write-tool blocking for readonly tokens. Covers most
+                #    cases.
+                # 2. td.visible_to(user) — opt-in callable a tool can set
+                #    when its gate isn't expressible as a flat
+                #    ``requires_access`` level. The search MCP tools use
+                #    this to honour the underlying view's ``search_access``
+                #    tier, which check_tool_access can't see (round-2 audit
+                #    §3.3 follow-up: search_users was visible-but-non-
+                #    functional to non-staff callers in v0.11.10).
+                tools = []
+                for td in TOOL_REGISTRY.values():
+                    if check_tool_access(token, td, mixins=None) is not None:
+                        continue
+                    if td.visible_to is not None:
+                        try:
+                            if not td.visible_to(user):
+                                continue
+                        except Exception:
+                            # A misconfigured visible_to callback fails
+                            # SAFE: hide the tool rather than expose it.
+                            logger.exception(
+                                "MCP tool %r visible_to callback raised — hiding from list",
+                                td.name,
+                            )
+                            continue
+                    tools.append({
                         "name": td.name,
                         "description": td.description,
                         "inputSchema": td.input_schema,
-                    }
-                    for td in TOOL_REGISTRY.values()
-                    if check_tool_access(token, td, mixins=None) is None
-                ]
+                    })
                 return _rpc_result(rpc_id, {"tools": tools})
 
             if method == "tools/call":

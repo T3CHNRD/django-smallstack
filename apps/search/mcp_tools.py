@@ -119,6 +119,16 @@ def register_search_tools() -> int:
 
             return {"results": [h.as_dict() for h in hits], "backend": backend.name}
 
+        # Hide the tool from tools/list for callers whose ``search_access``
+        # tier on the underlying view doesn't admit them. Without this the
+        # tool is visible-but-non-functional — non-staff callers see
+        # search_users in their tools/list and get ``{"denied": true}`` on
+        # call. The handler still applies the gate at call time (defense
+        # in depth); this is the listing-side mirror.
+        def _is_visible(user, *, _view=view):
+            from .registry import _user_can_see
+            return _user_can_see(_view, user)
+
         try:
             tool(
                 tool_name,
@@ -136,6 +146,7 @@ def register_search_tools() -> int:
                     "required": ["query"],
                 },
                 requires_access="readonly",
+                visible_to=_is_visible,
             )(_handler)
             count += 1
         except Exception:
