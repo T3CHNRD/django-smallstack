@@ -23,12 +23,19 @@ class TicketCRUDView(CRUDView):
     model           = Ticket
     actions         = [Action.LIST, Action.CREATE, Action.DETAIL, Action.UPDATE, Action.DELETE]
     filter_fields   = ["status", "priority", "customer"]
-    enable_api      = True     # → REST  /api/tickets/
-    enable_mcp      = True     # → MCP   list_tickets, create_ticket, …
+    url_base        = "tickets"
+    enable_api      = True     # → REST  <include-prefix>/api/tickets/
+    enable_mcp      = True     # → MCP   list_tickets, create_ticket, … (opt-in)
     enable_explorer = True     # → HTML  /smallstack/explorer/support/ticket/
 ```
 
-Same form/queryset/permission logic, three surfaces.
+Same form/queryset/permission logic, three surfaces. The REST URL is
+`<include-prefix> + SMALLSTACK_API_PREFIX (default "api/") + url_base + "/"`,
+where `<include-prefix>` is wherever your app's `urls.py` is mounted in
+`config/urls.py`. So a CRUDView in `apps/support/` included under
+`path("support/", include("apps.support.urls"))` emits the REST surface
+at `/support/api/tickets/`. CRUD MCP tools require explicit
+`enable_mcp = True` — the default install ships search-only MCP.
 
 ## Batteries included
 
@@ -48,6 +55,15 @@ Built-in apps that run themselves — no setup beyond `make setup`:
 - **Auth + Profile** — custom User model, photo, timezone, theme preference
 
 ## Quick start
+
+**Prerequisites:** [uv](https://docs.astral.sh/uv/) and `make`. uv manages
+the Python version automatically (`>=3.12`) — no system Python required.
+
+```bash
+# Install uv if you don't have it:
+curl -LsSf https://astral.sh/uv/install.sh | sh   # macOS / Linux
+# Windows: powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
 ```bash
 git clone https://github.com/emichaud/django-smallstack.git myapp

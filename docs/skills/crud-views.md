@@ -187,6 +187,56 @@ All three take `url_base` — must match CRUDView's `url_base`.
 
 Common: skip DETAIL and link directly to edit via `DetailLinkColumn(link_view="update")`.
 
+## URL namespaces (`app_name` in your `urls.py`)
+
+CRUDView's internal URL reverses use **bare URL names** (e.g.
+`reverse("widgets-list")`) by default. If your app's `urls.py` declares
+`app_name = "myapp"`, Django automatically namespaces those names — and
+those bare reverses will raise `NoReverseMatch`.
+
+Two ways to handle this:
+
+**Option 1 — Don't set `app_name` in the urls.py that hosts your
+CRUDViews** (simplest). Use globally-unique URL names instead:
+
+```python
+# apps/knowledge/urls.py
+urlpatterns = [
+    # No app_name = "knowledge" line.
+    path("featured/", FeaturedView.as_view(), name="knowledge-featured"),
+    *KnowledgeCRUDView.urlpatterns(),
+]
+```
+
+**Option 2 — Set `namespace` on every CRUDView in the namespaced
+urls.py** (when you want the namespace badly enough that the prefix
+collisions are worth it):
+
+```python
+# apps/knowledge/urls.py
+app_name = "knowledge"
+urlpatterns = [
+    path("featured/", FeaturedView.as_view(), name="featured"),
+    *KnowledgeCRUDView.urlpatterns(),
+]
+
+# apps/knowledge/views.py
+class KnowledgeCRUDView(CRUDView):
+    model = Article
+    url_base = "articles"
+    namespace = "knowledge"   # ← matches app_name; CRUDView prepends it on internal reverses
+```
+
+`namespace` is a class attribute on `CRUDView`. When set, every internal
+`reverse()` becomes `reverse("knowledge:widgets-list")` instead of
+`reverse("widgets-list")`. Without it, internal navigation breaks the
+moment `app_name` is set.
+
+A common AI-vibe-coding footgun: declaring `app_name` reflexively
+because Django docs encourage it. CRUDView's bare-name convention is
+deliberate (it lets the same CRUDView serve both namespaced and
+root-mounted URL configs), but it requires this opt-in.
+
 ## Template Resolution
 
 1. **App-specific:** `<app_label>/crud/<model_name>_<suffix>.html`
@@ -294,11 +344,32 @@ class WidgetCRUDView(CRUDView):
     enable_api = True
 ```
 
-This adds JSON endpoints at `api/manage/widgets/` and `api/manage/widgets/<pk>/` with:
+This adds JSON endpoints at `<include-prefix>/api/manage/widgets/` and `<include-prefix>/api/manage/widgets/<pk>/` with:
 - Bearer token and session authentication
 - GET (list with search/filter/pagination/export), POST (create)
 - GET (detail), PUT/PATCH (update), DELETE
 - Permissions cascade from CRUDView's `mixins`
+
+### URL anatomy
+
+The final REST URL is composed of three parts:
+
+```
+<include-prefix> + SMALLSTACK_API_PREFIX + url_base + "/"
+```
+
+| Piece | Source | Example |
+|---|---|---|
+| `<include-prefix>` | Wherever your app's `urls.py` is mounted in `config/urls.py` | `path("support/", include("apps.support.urls"))` → `/support/` |
+| `SMALLSTACK_API_PREFIX` | Setting in `config/settings/smallstack.py` (default `"api/"`) | `api/` |
+| `url_base` | The CRUDView attribute | `tickets` |
+
+So a `TicketCRUDView` with `url_base = "tickets"` included under
+`path("support/", ...)` lands at `/support/api/tickets/`. If the same
+CRUDView's `urls.py` is mounted at the project root (`path("",
+include(...))`), it lands at `/api/tickets/`. This is the most common
+source of "I followed the docs but my API endpoint 404s" — always look
+at where your `urls.py` is `include()`'d in `config/urls.py`.
 
 See the `api` skill for full details.
 

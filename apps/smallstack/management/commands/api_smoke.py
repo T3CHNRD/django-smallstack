@@ -177,7 +177,25 @@ class Command(BaseCommand):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 payload = resp.read().decode("utf-8")
                 status = resp.status
+        except urllib.error.HTTPError as exc:
+            # 4xx/5xx — the server is reachable but rejected the request.
+            # Distinguish auth failures from generic HTTP errors so the
+            # message tells the developer which knob to turn.
+            body = ""
+            try:
+                body = exc.read().decode("utf-8", errors="replace")[:200]
+            except Exception:
+                pass
+            if exc.code in (401, 403):
+                raise CommandError(
+                    f"HTTP {exc.code} from {url}: {body}\n"
+                    f"  → Auth rejected. The smoke uses a readonly token; if your "
+                    f"CRUDView has StaffRequiredMixin you need a staff token. "
+                    f"Mint one with `create_api_token <user> --access-level staff`."
+                ) from exc
+            raise CommandError(f"HTTP {exc.code} from {url}: {body}") from exc
         except urllib.error.URLError as exc:
+            # Real connection-level failure (refused, DNS, timeout).
             raise CommandError(
                 f"Could not reach {url}: {exc.reason}. Is the dev server running? (`make run`)"
             ) from exc

@@ -92,6 +92,16 @@ urlpatterns = [
 ]
 ```
 
+> **Footgun: `app_name` URL namespaces.** Do **not** add
+> `app_name = "myfeature"` to that `urls.py` unless you also set
+> `namespace = "myfeature"` on every CRUDView in the file. CRUDView's
+> internal `reverse()` calls use bare URL names by default
+> (`reverse("widgets-list")`). Setting `app_name` namespaces the URL
+> as `myfeature:widgets-list`, which the bare reverses can't find —
+> every page in the CRUDView throws `NoReverseMatch`. The fix is one
+> of two opt-ins, both shown in `docs/skills/crud-views.md` under
+> "URL namespaces".
+
 ### 4. Register the App
 
 ```python

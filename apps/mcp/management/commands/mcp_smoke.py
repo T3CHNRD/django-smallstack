@@ -174,7 +174,27 @@ class Command(BaseCommand):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 payload = resp.read().decode("utf-8")
                 status = resp.status
+        except urllib.error.HTTPError as exc:
+            # 4xx/5xx — server reachable, request rejected. Auth failures
+            # (401/403) are the most common false-conflation with
+            # "server unreachable", so call them out explicitly.
+            body = ""
+            try:
+                body = exc.read().decode("utf-8", errors="replace")[:200]
+            except Exception:
+                pass
+            if exc.code in (401, 403):
+                raise CommandError(
+                    f"HTTP {exc.code} from {url}: {body}\n"
+                    f"  → Auth rejected. The smoke uses a readonly token; if any "
+                    f"CRUDView has StaffRequiredMixin its tools require an "
+                    f"`access_level=staff` token. Mint one with "
+                    f"`create_api_token <user> --access-level staff`, "
+                    f"or run the smoke against a non-staff CRUDView."
+                ) from exc
+            raise CommandError(f"HTTP {exc.code} from {url}: {body}") from exc
         except urllib.error.URLError as exc:
+            # Real connection-level failure (refused, DNS, timeout).
             raise CommandError(
                 f"Could not reach {url}: {exc.reason}. Is the dev server running? (`make run`)"
             ) from exc

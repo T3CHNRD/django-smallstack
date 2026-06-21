@@ -111,6 +111,38 @@ Without overrides, existing CRUDViews keep their pre-P23 names — the change is
 
 The factory calls `view_cls.get_list_queryset(qs, request)` with `request.user` set to the token's user. If your CRUDView already scopes by `request.user`, MCP inherits it. The same applies to `can_update(obj, request)` and `can_delete(obj, request)` for row-level perms.
 
+## Mixin → token access_level mapping
+
+When the factory builds an MCP tool from a CRUDView, the CRUDView's
+auth mixin determines what `access_level` an API token must hold to
+call the tool. This is automatic and not configurable per-tool — set
+the right mixin and the gate falls out.
+
+| CRUDView mixin | Generated tool requires | Why |
+|---|---|---|
+| `StaffRequiredMixin` | `access_level=staff` (or higher) | Staff-only HTML page → staff-only MCP. The corresponding token type. |
+| `LoginRequiredMixin` | `access_level=readonly` or higher | Any authenticated principal. |
+| *(none)* | `access_level=readonly` or higher | No auth on the HTML page either — warns at startup. |
+
+Mismatched levels surface as:
+
+```
+HTTP 403  → JSON-RPC error: {"code": -32000, "message": "Forbidden: access_required:staff"}
+```
+
+If you mint a `readonly` token and the CRUDView uses
+`StaffRequiredMixin`, every call to `list_<x>` / `get_<x>` / etc.
+returns this error. The fix is to mint the token with `--access-level
+staff` (or relax the mixin). The smoke commands `make api-test` /
+`make mcp-test` use a `readonly` token by default — they'll trip this
+gate on any staff-only CRUDView. Either pass a staff token or scope
+the smoke to non-staff CRUDViews.
+
+Write actions (`create_*`, `update_*`, `delete_*`) carry an additional
+`write=True` flag on the tool, which the runtime checks against the
+token's scope. A `readonly` token can never call a write tool — even if
+the access_level matches.
+
 ## Verify
 
 ```bash
