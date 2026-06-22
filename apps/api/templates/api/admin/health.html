@@ -19,6 +19,9 @@
     </nav>
   </div>
   <div style="display: flex; gap: 12px; align-items: stretch;">
+    {% if swagger_url %}
+    <a href="{{ swagger_url }}" target="_blank" rel="noopener" class="btn-outline" style="display: inline-flex; align-items: center;">Open Swagger ↗</a>
+    {% endif %}
     <form method="post"
           action="{% url 'api_admin:self_test' %}"
           hx-post="{% url 'api_admin:self_test' %}"
@@ -65,12 +68,12 @@
       <div style="color: var(--body-quiet-color); font-size: 0.8rem;">Failures</div>
     </div>
   </div>
-  <div class="card">
+  <a href="{% url 'api_admin:endpoints' %}" class="card" style="text-decoration: none; display: block;">
     <div class="card-body" style="text-align: center; padding: 14px 8px;">
       <div style="font-size: 1.75rem; font-weight: 700; color: var(--primary);">{{ endpoint_count }}</div>
-      <div style="color: var(--body-quiet-color); font-size: 0.8rem;">Registered endpoints</div>
+      <div style="color: var(--body-quiet-color); font-size: 0.8rem;">Registered endpoints →</div>
     </div>
-  </div>
+  </a>
 </div>
 
 {# ── Self-test result swap target ──────────────────────────────── #}

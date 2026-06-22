@@ -7,13 +7,19 @@ pages observe it from a staff-gated path.
 
 from django.urls import path
 
-from .admin_views import APIAdminActivityView, APIAdminHealthView, APIAdminSelfTestView
+from .admin_views import (
+    APIAdminActivityView,
+    APIAdminEndpointsView,
+    APIAdminHealthView,
+    APIAdminSelfTestView,
+)
 
 app_name = "api_admin"
 
 urlpatterns = [
     path("", APIAdminHealthView.as_view(), name="health"),
     path("health/", APIAdminHealthView.as_view(), name="health_alias"),
+    path("endpoints/", APIAdminEndpointsView.as_view(), name="endpoints"),
     path("activity/", APIAdminActivityView.as_view(), name="activity"),
     # POST-only — backs the "Run Self-Test" button on Health.
     path("self-test/", APIAdminSelfTestView.as_view(), name="self_test"),

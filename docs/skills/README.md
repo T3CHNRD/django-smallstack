@@ -41,6 +41,7 @@ When an AI agent is asked to modify or extend this project, these files help it:
 | [development-workflow.md](development-workflow.md) | Branching, testing, coverage, documentation, commit style |
 | [release-process.md](release-process.md) | Versioning, release checklist, GitHub releases |
 | [integration-workflow.md](integration-workflow.md) | Pulling upstream into downstream projects, deploying |
+| [downstream-release-migration.md](downstream-release-migration.md) | Migrating a downstream onto a new release — additive vs breaking changes, the false-test-result + removed-symbol traps, this release's actions |
 | [api-discovery.md](api-discovery.md) | API discovery endpoints: schema introspection, OpenAPI spec, OPTIONS metadata |
 | [custom-api-endpoints.md](custom-api-endpoints.md) | Building non-CRUD API endpoints with the `@api_view` decorator |
 | [api-doctor.md](api-doctor.md) | Debug API setup + threat signals via `/smallstack/api/` (Health + Activity) and `python manage.py api_doctor` |
@@ -106,6 +107,7 @@ AI agents should read relevant skill files before making changes to the correspo
 - Before developing features → read `development-workflow.md`
 - Before releasing a version → read `release-process.md`
 - Before pulling upstream into downstream → read `integration-workflow.md`
+- Before migrating a downstream across one or more releases → read `downstream-release-migration.md`
 - Before integrating with the SmallStack API → read `api-discovery.md`
 - Before building custom (non-CRUD) API endpoints → read `custom-api-endpoints.md`
 - Before debugging an API setup, an empty Swagger, or a "weird traffic" report → read `api-doctor.md`

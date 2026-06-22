@@ -96,11 +96,12 @@
         </label>
         <label style="display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; flex: 1; min-width: 14rem;">
           <span style="color: var(--body-quiet-color); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;">User</span>
-          <input type="text" name="user" value="{{ current.user }}" placeholder="username icontains"
+          <input type="text" name="user" value="{{ current.user }}" placeholder="username contains"
                  style="padding: 6px 10px;">
         </label>
-        <button type="submit" class="btn-primary btn-sm" style="height: 33px;">Apply</button>
-        <a href="{% url 'mcp_admin:activity' %}" class="btn-outline btn-sm" style="line-height: 1.5;">Reset</a>
+        {# Buttons match the control box model (6px vertical padding + 1px border) so they sit flush with the selects/input on the align-items:end baseline. #}
+        <button type="submit" class="btn-primary" style="display: inline-flex; align-items: center; padding: 6px 16px; border: 1px solid transparent;">Apply</button>
+        <a href="{% url 'mcp_admin:activity' %}" class="btn-outline" style="display: inline-flex; align-items: center; padding: 6px 16px;">Reset</a>
       </form>
     </div>
   </div>

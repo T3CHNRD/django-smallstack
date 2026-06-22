@@ -230,7 +230,6 @@ class TestRequestListView:
         content = response.content.decode()
         assert "<html" in content
 
-    @pytest.mark.starter_content
     def test_title_bar_has_breadcrumbs(self, client, staff_user):
         """Requests page should have inline breadcrumbs in title bar."""
         client.login(username="staffuser", password="testpass123")
@@ -306,7 +305,6 @@ class TestUserActivityView:
         content = response.content.decode()
         assert "<html" in content
 
-    @pytest.mark.starter_content
     def test_title_bar_has_breadcrumbs(self, client, staff_user):
         """User activity page should have inline breadcrumbs in title bar."""
         client.login(username="staffuser", password="testpass123")

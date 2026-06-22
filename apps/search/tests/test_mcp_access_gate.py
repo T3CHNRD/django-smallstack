@@ -28,6 +28,25 @@ from apps.mcp.server import TOOL_HANDLERS, ToolContext, reset_context, set_conte
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _ensure_search_tools_registered():
+    """Re-register the search MCP tools before each test in this module.
+
+    The MCP test suite's ``clean_registry`` fixture calls
+    ``clear_registry_for_tests()``, which wipes ``TOOL_HANDLERS`` — including
+    the search tools that registered at app startup. Without this, whether
+    these security-regression tests run depends on test ordering: after any
+    MCP test they'd find an empty registry and silently ``pytest.skip`` with a
+    misleading "not installed" message, disabling the §3.3 authz coverage in
+    the base *and* every downstream. ``register_search_tools()`` is idempotent
+    and a no-op when apps.mcp isn't installed, so the per-test skip guards stay
+    correct for projects that genuinely lack these apps.
+    """
+    from apps.search.mcp_tools import register_search_tools
+
+    register_search_tools()
+
+
 def _call_async(coro):
     """Run an async MCP handler from a sync test."""
     return async_to_sync(lambda: coro)()

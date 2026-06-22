@@ -36,6 +36,29 @@ class _AdminBase(StaffRequiredMixin, TemplateView):
         return ctx
 
 
+def _resolve_service_url(url_name: str) -> str | None:
+    """Reverse an API service route, returning None if it isn't wired."""
+    from django.urls import NoReverseMatch, reverse
+
+    try:
+        return reverse(url_name)
+    except NoReverseMatch:
+        return None
+
+
+# Ordered map of the runtime REST services the admin can link to. `kind`
+# drives styling: primary = interactive UIs, schema = raw JSON, auth = API
+# calls listed for reference (not "viewable" in a browser).
+_API_SERVICES: tuple[tuple[str, str, str, str], ...] = (
+    ("api-docs", "Swagger UI", "Interactive API explorer", "primary"),
+    ("api-redoc", "ReDoc", "Reference documentation", "primary"),
+    ("api-openapi-schema", "OpenAPI JSON", "OpenAPI 3.0.3 spec", "schema"),
+    ("api-schema", "Schema JSON", "Endpoint registry + fields", "schema"),
+    ("api-auth-token", "Auth: token", "POST — obtain a bearer token", "auth"),
+    ("api-auth-me", "Auth: me", "GET — current token's user", "auth"),
+)
+
+
 class APIAdminHealthView(_AdminBase):
     template_name = "api/admin/health.html"
 
@@ -44,6 +67,8 @@ class APIAdminHealthView(_AdminBase):
 
         ctx = super().get_context_data(**kwargs)
         ctx["page"] = "health"
+        # Quick "Open Swagger" link in the header — only when docs are wired.
+        ctx["swagger_url"] = _resolve_service_url("api-docs")
 
         # Rebind api_doctor's checks to an HTML surface — same `_check_*`
         # methods, same `report` shape. Skip `_self_test` (HTTP + DB) —
@@ -64,6 +89,54 @@ class APIAdminHealthView(_AdminBase):
         ctx["pass_count"] = sum(1 for r in report if r["status"] == "PASS")
         ctx["warn_count"] = sum(1 for r in report if r["status"] == "WARN")
         ctx["fail_count"] = sum(1 for r in report if r["status"] == "FAIL")
+        return ctx
+
+
+class APIAdminEndpointsView(_AdminBase):
+    """Navigable map of the REST surface: service links + enabled models.
+
+    Pure read-only introspection over ``_api_registry`` — the same source
+    of truth ``api_doctor`` and the OpenAPI generator use. No DB access.
+    """
+
+    template_name = "api/admin/endpoints.html"
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        from apps.smallstack.api import _api_registry, _build_endpoint_schema
+
+        ctx = super().get_context_data(**kwargs)
+        ctx["page"] = "endpoints"
+
+        # Service links — only those that actually resolve.
+        services: list[dict[str, str]] = []
+        for url_name, label, desc, kind in _API_SERVICES:
+            url = _resolve_service_url(url_name)
+            if url is not None:
+                services.append({"label": label, "desc": desc, "url": url, "kind": kind})
+        ctx["services"] = services
+
+        # One row per CRUDView with enable_api=True. Per-row try/except so a
+        # single misconfigured config can't 500 the whole page.
+        resources: list[dict[str, Any]] = []
+        for crud_config, list_url_name in _api_registry:
+            try:
+                schema = _build_endpoint_schema(crud_config, list_url_name)
+                model = crud_config.model
+                resources.append(
+                    {
+                        "model": schema["model"],
+                        "verbose_name": str(model._meta.verbose_name).title(),
+                        "list_url": schema["url"],
+                        "detail_url": schema["url"].rstrip("/") + "/<int:pk>/",
+                        "methods": schema["methods"],
+                        "filter_count": len(schema["filter_fields"]),
+                        "search_count": len(schema["search_fields"]),
+                    }
+                )
+            except Exception:  # noqa: BLE001 — skip a broken config, keep the page up
+                continue
+        resources.sort(key=lambda r: r["model"].lower())
+        ctx["resources"] = resources
         return ctx
 
 

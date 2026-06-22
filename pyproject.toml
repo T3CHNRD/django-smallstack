@@ -1,6 +1,6 @@
 [project]
 name = "django-smallstack"
-version = "0.11.14"
+version = "0.11.15"
 description = "A minimal Django stack for building and deploying admin-style apps"
 requires-python = ">=3.12"
 dependencies = [
@@ -56,7 +56,7 @@ filterwarnings = [
     "ignore:SMALLSTACK_TOPBAR_NAV_ITEMS:DeprecationWarning",
 ]
 markers = [
-    "starter_content: tests that assert upstream starter text/HTML — safe to skip in downstream projects",
+    "starter_content: tests that assert upstream starter *copy/pages* (legal text, marketing/home, signup) a downstream replaces or disables — safe to skip downstream. Do NOT tag framework chrome (breadcrumbs, topbar nav) that downstream keeps.",
 ]
 
 [tool.coverage.run]

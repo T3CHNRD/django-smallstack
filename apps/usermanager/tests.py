@@ -68,7 +68,6 @@ class TestUserListView:
         assert "list-toolbar-search-input" in content
         assert response.context["dashboard_stats"] is not None
 
-    @pytest.mark.starter_content
     def test_breadcrumbs_in_title_bar(self, client, staff_user):
         client.force_login(staff_user)
         response = client.get(reverse("manage/users-list"))
