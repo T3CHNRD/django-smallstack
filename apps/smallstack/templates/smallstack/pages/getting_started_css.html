@@ -35,6 +35,13 @@
       transparent 95% 100%);
     padding: 0 0.05em;
   }
+  /* Soften the accent band over white — 22% is tuned for the dark canvas. */
+  [data-theme="light"] .gs-display em {
+    background: linear-gradient(to bottom,
+      transparent 0% 62%,
+      color-mix(in srgb, var(--primary) 13%, transparent) 62% 95%,
+      transparent 95% 100%);
+  }
   .gs-rule { height: 1px; background: var(--gs-hair); margin: 0; border: none; }
   .gs-section { padding: clamp(2.5rem, 5vw, 3.5rem) 0; }
   .gs-section-label {
@@ -141,7 +148,7 @@
   .gs-code .kw  { color: var(--primary); font-weight: 600; }
   .gs-code .fn  { color: var(--body-fg); font-weight: 600; }
   .gs-code .st  { color: var(--success-fg); }
-  .gs-code .num { color: var(--message-warning-bg, orange); }
+  .gs-code .num { color: var(--warning-fg); }
   .gs-code .cm  { color: var(--body-quiet-color); }
 
   /* inline doc links under each step */

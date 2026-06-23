@@ -18,17 +18,18 @@ class TestWebsiteViews:
         response = client.get("/")
         content = response.content.decode()
         assert "batteries-included" in content
-        assert "scheduler systems" in content
+        assert "background scheduler" in content
         assert "MCP servers" in content
 
     def test_home_page_pipeline_section(self, client):
-        """The model-to-three-surfaces pipeline is the page's centerpiece."""
+        """The model-to-four-surfaces pipeline is the page's centerpiece."""
         response = client.get("/")
         content = response.content.decode()
         assert "One model" in content
-        assert "Three surfaces" in content
+        assert "Four surfaces" in content
         assert "TicketCRUDView" in content
         assert "enable_mcp" in content
+        assert "enable_search" in content
 
     def test_home_page_batteries_grid(self, client):
         """Batteries-included grid should name the built-in apps."""

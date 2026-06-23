@@ -371,64 +371,108 @@ body.sidebar-closed .main-content {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .apps-menu-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.15);
+    background-color: color-mix(in srgb, var(--header-fg) 12%, transparent);
+    border-color: color-mix(in srgb, var(--header-fg) 18%, transparent);
 }
 
-[data-theme="light"] .apps-menu-toggle:hover {
-    background-color: rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.1);
+/* Accent-consistent focus ring + open state (replaces the browser's blue outline). */
+.apps-menu-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+.apps-menu:has(.apps-dropdown.show) .apps-menu-toggle {
+    background-color: color-mix(in srgb, var(--primary) 16%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+    color: var(--primary);
 }
 
 .apps-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 8px;
+    margin-top: 10px;
     background-color: var(--card-bg);
-    border: 1px solid var(--card-border);
+    border: 1px solid color-mix(in srgb, var(--body-fg) 14%, var(--card-border));
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    width: 300px;
+    box-shadow:
+        0 18px 48px -12px rgba(0, 0, 0, 0.55),
+        0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
+    width: 320px;
     display: none;
     z-index: 1001;
     overflow: hidden;
+    transform-origin: top right;
 }
 
 .apps-dropdown.show {
     display: block;
+    animation: appsDropdownPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Transform-only entrance — never animates opacity, so the panel can't be
+   left transparent if the animation is interrupted. */
+@keyframes appsDropdownPop {
+    from { transform: translateY(-6px) scale(0.97); }
+    to   { transform: none; }
+}
+
+/* Accent hairline crowning the panel — a thread of the active palette. */
+.apps-dropdown::before {
+    content: "";
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent,
+        color-mix(in srgb, var(--primary) 70%, transparent),
+        transparent);
 }
 
 .apps-dropdown-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    padding: 13px 16px;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--card-border);
+    letter-spacing: 0.08em;
+    color: var(--body-quiet-color);
+    border-bottom: 1px solid color-mix(in srgb, var(--body-fg) 8%, transparent);
+}
+
+/* Small accent tick before the "My Apps" label. */
+.apps-dropdown-header > span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.apps-dropdown-header > span:first-child::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    background: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .apps-dropdown-settings {
-    color: var(--text-muted);
-    transition: color var(--transition-fast);
+    color: var(--body-quiet-color);
+    transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
 .apps-dropdown-settings:hover {
     color: var(--primary);
+    transform: rotate(45deg);
 }
 
 .apps-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
+    gap: 4px;
     padding: 12px;
 }
 
@@ -436,33 +480,72 @@ body.sidebar-closed .main-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 16px 8px;
-    border-radius: var(--radius-sm);
+    gap: 9px;
+    padding: 14px 8px;
+    border-radius: var(--radius-md, 10px);
     text-decoration: none;
-    color: var(--body-fg);
-    transition: background-color var(--transition-fast);
+    color: var(--body-quiet-color);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
+/* Entrance fade-in. Items are visible by default (opacity:1); the animation
+   only adds a fade-from-0 while the panel opens — so they never disappear if
+   the animation is skipped. */
+.apps-dropdown.show .apps-grid-item {
+    animation: appsItemFade 0.32s ease-out;
+}
+@keyframes appsItemFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+.apps-dropdown.show .apps-grid-item:nth-child(1) { animation-delay: 0.04s; }
+.apps-dropdown.show .apps-grid-item:nth-child(2) { animation-delay: 0.07s; }
+.apps-dropdown.show .apps-grid-item:nth-child(3) { animation-delay: 0.10s; }
+.apps-dropdown.show .apps-grid-item:nth-child(4) { animation-delay: 0.13s; }
+.apps-dropdown.show .apps-grid-item:nth-child(5) { animation-delay: 0.16s; }
+.apps-dropdown.show .apps-grid-item:nth-child(6) { animation-delay: 0.19s; }
+.apps-dropdown.show .apps-grid-item:nth-child(n+7) { animation-delay: 0.22s; }
 
 .apps-grid-item:hover {
-    background-color: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
+    background-color: color-mix(in srgb, var(--body-fg) 5%, var(--card-bg));
     text-decoration: none;
     color: var(--body-fg);
 }
 
 .apps-grid-item.active {
-    background-color: color-mix(in srgb, var(--primary) 8%, var(--card-bg));
+    background-color: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
+    color: var(--primary);
 }
 
 .apps-grid-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-sm);
-    background-color: color-mix(in srgb, var(--primary) 8%, var(--card-bg));
-    border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--card-bg));
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    /* Neutral lift — palette-agnostic, never muddy-brown on warm palettes. */
+    background-color: color-mix(in srgb, var(--body-fg) 7%, var(--card-bg));
+    border: 1px solid color-mix(in srgb, var(--body-fg) 12%, transparent);
+    color: var(--primary);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast),
+        color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Hover/focus: the tile fills with the accent and the icon flips to button-fg —
+   a crisp, high-contrast "activate" moment that reads identically on all 5 palettes. */
+.apps-grid-item:hover .apps-grid-icon,
+.apps-grid-item:focus-visible .apps-grid-icon {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--button-fg);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
+/* Active app: accent-outlined + tinted, distinct from the full-fill hover. */
+.apps-grid-item.active .apps-grid-icon {
+    background-color: color-mix(in srgb, var(--primary) 18%, var(--card-bg));
+    border-color: var(--primary);
     color: var(--primary);
 }
 
@@ -476,6 +559,13 @@ body.sidebar-closed .main-content {
     font-weight: 500;
     text-align: center;
     line-height: 1.2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .apps-dropdown.show,
+    .apps-dropdown.show .apps-grid-item { animation: none; }
+    .apps-grid-item:hover .apps-grid-icon { transform: none; }
+    .apps-dropdown-settings:hover { transform: none; }
 }
 
 /* User Menu */

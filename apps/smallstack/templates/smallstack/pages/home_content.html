@@ -31,6 +31,14 @@
       transparent 95% 100%);
     padding: 0 0.05em;
   }
+  /* The accent band reads as a subtle glow over the dark canvas at 22%, but
+     the same mix over white is too saturated — soften it in light mode. */
+  [data-theme="light"] .ss-display em {
+    background: linear-gradient(to bottom,
+      transparent 0% 62%,
+      color-mix(in srgb, var(--primary) 13%, transparent) 62% 95%,
+      transparent 95% 100%);
+  }
   .ss-hero h1 { font-size: clamp(2.4rem, 6.2vw, 4.6rem); }
   .ss-hero-sub {
     max-width: 38rem;
@@ -148,7 +156,7 @@
   .ss-pipeline .kw   { color: var(--primary); font-weight: 600; }
   .ss-pipeline .cls  { color: var(--body-fg); font-weight: 600; }
   .ss-pipeline .str  { color: var(--success-fg); }
-  .ss-pipeline .num  { color: var(--message-warning-bg, orange); }
+  .ss-pipeline .num  { color: var(--warning-fg); }
   .ss-pipeline .com  { color: var(--body-quiet-color); }
   .ss-pipeline .arrow { color: var(--primary); }
 
@@ -159,6 +167,9 @@
     margin-top: 1.25rem;
   }
   @media (max-width: 720px) { .ss-surfaces { grid-template-columns: 1fr; } }
+  .ss-surfaces.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) { .ss-surfaces.cols-4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .ss-surfaces.cols-4 { grid-template-columns: 1fr; } }
   .ss-surface {
     padding: 1rem 1.1rem;
     border: 1px solid color-mix(in srgb, var(--body-fg) 12%, transparent);
@@ -305,11 +316,11 @@
 
   <p class="ss-hero-sub">
     A small-footprint Django foundation for shipping
-    <strong style="color: var(--body-fg); font-weight: 600;">scheduler systems</strong>,
     <strong style="color: var(--body-fg); font-weight: 600;">websites</strong>,
     <strong style="color: var(--body-fg); font-weight: 600;">API servers</strong>, and
-    <strong style="color: var(--body-fg); font-weight: 600;">MCP servers</strong> —
-    with Explorer, CRUDView, and a model-to-API-to-MCP pipeline already wired up.
+    <strong style="color: var(--body-fg); font-weight: 600;">MCP servers</strong> — plus
+    a background scheduler — with Explorer, CRUDView, and a model-to-API-to-MCP
+    pipeline already wired up.
   </p>
 
   <div class="ss-cta-row">
@@ -340,40 +351,40 @@
   <div class="ss-shapes">
     <div class="ss-shape">
       <span class="ss-shape-num">01</span>
-      <span class="ss-shape-name">Scheduler</span>
-      <p class="ss-shape-desc">Django Tasks framework + DB worker pre-wired. Background jobs and cron-style schedules out of the box.</p>
-    </div>
-    <div class="ss-shape">
-      <span class="ss-shape-num">02</span>
       <span class="ss-shape-name">Website</span>
       <p class="ss-shape-desc">Themed admin, dark mode, palettes, sidebar, breadcrumbs. Templates ready for marketing pages.</p>
     </div>
     <div class="ss-shape">
-      <span class="ss-shape-num">03</span>
+      <span class="ss-shape-num">02</span>
       <span class="ss-shape-name">API server</span>
       <p class="ss-shape-desc">REST with Bearer auth, OpenAPI 3.0.3 schema, Swagger UI, ReDoc — emitted from your CRUDViews.</p>
     </div>
     <div class="ss-shape">
-      <span class="ss-shape-num">04</span>
+      <span class="ss-shape-num">03</span>
       <span class="ss-shape-name">MCP server</span>
       <p class="ss-shape-desc">JSON-RPC + OAuth 2.0 + PKCE. Claude Desktop and Claude.ai Connectors UI both connect with no setup.</p>
+    </div>
+    <div class="ss-shape">
+      <span class="ss-shape-num">04</span>
+      <span class="ss-shape-name">Scheduler</span>
+      <p class="ss-shape-desc">Django Tasks + a DB worker, pre-wired for background jobs. The newest surface — recurring schedules are on the way.</p>
     </div>
   </div>
 </section>
 
 <hr class="ss-rule">
 
-{# ── ONE MODEL → THREE SURFACES (the killer feature) ────────────── #}
+{# ── ONE MODEL → FOUR SURFACES (the killer feature) ─────────────── #}
 <section class="ss-section ss-fade d2">
   <div class="ss-section-label">The pipeline</div>
 
   <h2 class="ss-display" style="font-size: clamp(1.7rem, 3.2vw, 2.4rem); margin-bottom: 0.5rem;">
-    One model. <em>Three surfaces.</em>
+    One model. <em>Four surfaces.</em>
   </h2>
   <p style="max-width: 44rem; color: var(--body-quiet-color); margin: 0;">
     Define your model once. CRUDView's opt-in flags emit the same form/queryset
-    logic as an HTML admin page, a REST endpoint, and an MCP tool — wired
-    through the same tenancy hook and permission checks.
+    logic as an HTML admin page, a REST endpoint, an MCP tool, and a search index —
+    each wired through the same tenancy hook and permission checks.
   </p>
 
   <div class="ss-pipeline-card">
@@ -382,12 +393,14 @@
     model           = <span class="cls">Ticket</span>
     actions         = [<span class="cls">Action</span>.LIST, <span class="cls">Action</span>.CREATE, <span class="cls">Action</span>.DETAIL, <span class="cls">Action</span>.UPDATE, <span class="cls">Action</span>.DELETE]
     filter_fields   = [<span class="str">"status"</span>, <span class="str">"priority"</span>, <span class="str">"customer"</span>]
-    enable_api      = <span class="num">True</span>     <span class="arrow">───→</span>  <span class="com">REST  /api/tickets/</span>
-    enable_mcp      = <span class="num">True</span>     <span class="arrow">───→</span>  <span class="com">MCP   list_tickets, get_ticket, create_ticket, …</span>
-    enable_explorer = <span class="num">True</span>     <span class="arrow">───→</span>  <span class="com">HTML  /smallstack/explorer/support/ticket/</span></pre>
+    search_fields   = [<span class="str">"subject"</span>, <span class="str">"body"</span>]
+    enable_api      = <span class="num">True</span>     <span class="arrow">───→</span>  <span class="com">REST    /api/tickets/</span>
+    enable_mcp      = <span class="num">True</span>     <span class="arrow">───→</span>  <span class="com">MCP     list_tickets, get_ticket, create_ticket, …</span>
+    enable_explorer = <span class="num">True</span>     <span class="arrow">───→</span>  <span class="com">HTML    /smallstack/explorer/support/ticket/</span>
+    enable_search   = <span class="num">True</span>     <span class="arrow">───→</span>  <span class="com">SEARCH  /search/ · search_all</span></pre>
   </div>
 
-  <div class="ss-surfaces">
+  <div class="ss-surfaces cols-4">
     <div class="ss-surface">
       <div class="ss-surface-name">HTML</div>
       <p class="ss-surface-path">Explorer</p>
@@ -402,6 +415,11 @@
       <div class="ss-surface-name">MCP</div>
       <p class="ss-surface-path">/mcp · tools/list</p>
       <p class="ss-surface-note">JSON-RPC + OAuth. Claude Desktop and Connectors UI work without extra setup.</p>
+    </div>
+    <div class="ss-surface">
+      <div class="ss-surface-name">SEARCH</div>
+      <p class="ss-surface-path">/search/ · search_all</p>
+      <p class="ss-surface-note">Full-text index across your models and the help docs — same index as an MCP tool.</p>
     </div>
   </div>
 </section>
