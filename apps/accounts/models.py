@@ -2,6 +2,9 @@
 Custom User model for authentication.
 """
 
+from datetime import timedelta
+
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
@@ -73,3 +76,55 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self) -> str:
         """Return the short name for the user."""
         return self.first_name or self.username
+
+
+class LoginCode(models.Model):
+    """A one-time numeric code for passwordless ("email me a code") login.
+
+    The raw code is never persisted — only a salted hash. Codes expire, are
+    single-use, and are attempt-limited to resist brute force.
+    """
+
+    MAX_ATTEMPTS = 5
+
+    user = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="login_codes"
+    )
+    code_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    consumed = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "consumed", "expires_at"])]
+
+    def __str__(self) -> str:
+        return f"LoginCode(user={self.user_id}, consumed={self.consumed})"
+
+    @classmethod
+    def issue(cls, user, *, length: int = 6, ttl_seconds: int | None = None):
+        """Create and store a fresh code for ``user``; return (instance, raw_code)."""
+        from django.conf import settings
+
+        from .emails import generate_numeric_code
+
+        ttl = ttl_seconds or getattr(settings, "SMALLSTACK_LOGIN_CODE_TTL", 600)
+        code = generate_numeric_code(length)
+        obj = cls.objects.create(
+            user=user,
+            code_hash=make_password(code),
+            expires_at=timezone.now() + timedelta(seconds=ttl),
+        )
+        return obj, code
+
+    @property
+    def is_live(self) -> bool:
+        return (
+            not self.consumed
+            and self.attempts < self.MAX_ATTEMPTS
+            and self.expires_at > timezone.now()
+        )
+
+    def check_code(self, raw: str) -> bool:
+        return check_password(raw, self.code_hash)

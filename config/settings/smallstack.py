@@ -49,6 +49,15 @@ BRAND_SIGNUP_TERMS_NOTICE = config("BRAND_SIGNUP_TERMS_NOTICE", default=True, ca
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@example.com")
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 
+# Accent colour used in HTML emails (the branded header band + buttons).
+# Emails can't use the live CSS palette, so this is a single re-brandable knob.
+# Default is the Django-palette emerald, not the old Django-admin teal.
+BRAND_EMAIL_ACCENT = config("BRAND_EMAIL_ACCENT", default="#10b981")
+
+# How long password-reset / set-password / invite links stay valid (seconds).
+# Set explicitly so the "expires in 24 hours" email copy is actually true.
+PASSWORD_RESET_TIMEOUT = config("PASSWORD_RESET_TIMEOUT", default=86400, cast=int)
+
 # ---------------------------------------------------------------------------
 # Feature Flags & UI
 # ---------------------------------------------------------------------------
@@ -66,6 +75,11 @@ SMALLSTACK_COLOR_PALETTE = config("SMALLSTACK_COLOR_PALETTE", default="purple")
 SMALLSTACK_LOGIN_ENABLED = config("SMALLSTACK_LOGIN_ENABLED", default=True, cast=bool)
 # Set to False to hide Sign Up and 404 the signup URL
 SMALLSTACK_SIGNUP_ENABLED = config("SMALLSTACK_SIGNUP_ENABLED", default=True, cast=bool)
+# Passwordless ("email me a code") login. When True the login page offers a
+# code-based sign-in: enter email -> 6-digit code emailed -> enter code -> in.
+SMALLSTACK_PASSWORDLESS_LOGIN = config("SMALLSTACK_PASSWORDLESS_LOGIN", default=False, cast=bool)
+# Validity window for a passwordless sign-in code, in seconds (default 10 min).
+SMALLSTACK_LOGIN_CODE_TTL = config("SMALLSTACK_LOGIN_CODE_TTL", default=600, cast=int)
 
 # ---------------------------------------------------------------------------
 # Sidebar
