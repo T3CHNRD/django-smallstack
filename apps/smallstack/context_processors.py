@@ -215,6 +215,7 @@ def branding(request: HttpRequest) -> dict[str, Any]:
         "smallstack_docs_enabled": getattr(settings, "SMALLSTACK_DOCS_ENABLED", True),
         "smallstack_login_enabled": getattr(settings, "SMALLSTACK_LOGIN_ENABLED", True),
         "smallstack_signup_enabled": getattr(settings, "SMALLSTACK_SIGNUP_ENABLED", True),
+        "smallstack_passwordless_login": getattr(settings, "SMALLSTACK_PASSWORDLESS_LOGIN", False),
         "smallstack_sidebar_enabled": sidebar_enabled,
         "smallstack_sidebar_default": sidebar_state,
         "sidebar_state": sidebar_state,
