@@ -5,23 +5,6 @@
 
 {% block breadcrumbs %}{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* Table styles are in components.css; only page-specific badges here */
-    .status-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    .status-success { background: color-mix(in srgb, var(--success-fg) 15%, var(--card-bg)); color: var(--success-fg); }
-    .status-failed { background: color-mix(in srgb, var(--error-fg) 15%, var(--card-bg)); color: var(--error-fg); }
-    .status-pruned { opacity: 0.5; }
-</style>
-{% endblock %}
-
 {% block page_header %}
 <div class="page-header-bleed page-header-with-actions" style="display: flex; align-items: center; justify-content: space-between;">
     <div class="page-header-content">

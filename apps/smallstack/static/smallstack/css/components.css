@@ -1124,24 +1124,32 @@ ul.pagination li.active span {
     letter-spacing: 0.02em;
 }
 
+/* Tinted-badge recipe: mix the semantic color into --card-bg (the surface
+   the badge sits on — tables/cards), never --body-bg. See the modern-dark
+   theme skill. Emit these via the {% status_badge %} tag in theme_tags. */
 .badge-success {
-    background: color-mix(in srgb, var(--success-fg, #22863a) 15%, var(--body-bg));
+    background: color-mix(in srgb, var(--success-fg, #22863a) 15%, var(--card-bg));
     color: var(--success-fg, #22863a);
 }
 
 .badge-warning {
-    background: color-mix(in srgb, var(--warning-fg, #b08800) 15%, var(--body-bg));
+    background: color-mix(in srgb, var(--warning-fg, #b08800) 18%, var(--card-bg));
     color: var(--warning-fg, #b08800);
 }
 
 .badge-error {
-    background: color-mix(in srgb, var(--error-fg, #dc3545) 15%, var(--body-bg));
+    background: color-mix(in srgb, var(--error-fg, #dc3545) 15%, var(--card-bg));
     color: var(--error-fg, #dc3545);
 }
 
 .badge-info {
-    background: color-mix(in srgb, var(--primary) 15%, var(--body-bg));
+    background: color-mix(in srgb, var(--primary) 15%, var(--card-bg));
     color: var(--primary);
+}
+
+.badge-neutral {
+    background: color-mix(in srgb, var(--body-fg) 8%, var(--card-bg));
+    color: var(--body-quiet-color);
 }
 
 

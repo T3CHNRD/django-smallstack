@@ -37,9 +37,9 @@
             <td>{% if record.file_size %}{{ record.file_size|filesizeformat }}{% else %}&mdash;{% endif %}</td>
             <td>
                 {% if record.is_pruned %}
-                    <span class="status-badge status-pruned">pruned</span>
+                    {% status_badge "pruned" %}
                 {% else %}
-                    <span class="status-badge status-{{ record.status }}">{{ record.status }}</span>
+                    {% status_badge record.status %}
                 {% endif %}
             </td>
             <td>{{ record.duration_ms }} ms</td>

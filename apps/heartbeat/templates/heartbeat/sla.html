@@ -7,18 +7,7 @@
 
 {% block extra_css %}
 <style>
-    .sla-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-    }
-    .sla-badge-met { background: color-mix(in srgb, var(--success-fg) 15%, var(--card-bg)); color: var(--success-fg); }
-    .sla-badge-below { background: color-mix(in srgb, var(--warning-fg) 15%, var(--card-bg)); color: var(--warning-fg); }
-    .sla-badge-breach { background: color-mix(in srgb, var(--error-fg) 15%, var(--card-bg)); color: var(--error-fg); }
+    /* SLA status pills now use the shared .badge system (status_badge tag). */
 
     /* Form styling */
     .sla-config-form label {
@@ -184,8 +173,8 @@
             <div class="stat-card-value" style="color: {{ uptime_overall_color }};">{% if uptime_overall != None %}{{ uptime_overall }}%{% else %}&mdash;{% endif %}</div>
             <div style="display: flex; gap: 4px;">
                 {% if uptime_overall != None %}
-                {% if uptime_overall >= sla_target %}<span class="sla-badge sla-badge-met">Goal</span>{% else %}<span class="sla-badge sla-badge-below">Below</span>{% endif %}
-                {% if uptime_overall >= sla_minimum %}<span class="sla-badge sla-badge-met">Commit</span>{% else %}<span class="sla-badge sla-badge-breach">Breach</span>{% endif %}
+                {% if uptime_overall >= sla_target %}{% status_badge "Goal" "success" %}{% else %}{% status_badge "Below" "warning" %}{% endif %}
+                {% if uptime_overall >= sla_minimum %}{% status_badge "Commit" "success" %}{% else %}{% status_badge "Breach" "error" %}{% endif %}
                 {% endif %}
             </div>
         </div>
@@ -197,8 +186,8 @@
             <div class="stat-card-value" style="color: {{ uptime_24h_color }};">{% if uptime_24h != None %}{{ uptime_24h }}%{% else %}&mdash;{% endif %}</div>
             <div style="display: flex; gap: 4px;">
                 {% if uptime_24h != None %}
-                {% if uptime_24h >= sla_target %}<span class="sla-badge sla-badge-met">Goal</span>{% else %}<span class="sla-badge sla-badge-below">Below</span>{% endif %}
-                {% if uptime_24h >= sla_minimum %}<span class="sla-badge sla-badge-met">Commit</span>{% else %}<span class="sla-badge sla-badge-breach">Breach</span>{% endif %}
+                {% if uptime_24h >= sla_target %}{% status_badge "Goal" "success" %}{% else %}{% status_badge "Below" "warning" %}{% endif %}
+                {% if uptime_24h >= sla_minimum %}{% status_badge "Commit" "success" %}{% else %}{% status_badge "Breach" "error" %}{% endif %}
                 {% endif %}
             </div>
         </div>
@@ -210,8 +199,8 @@
             <div class="stat-card-value" style="color: {{ uptime_7d_color }};">{% if uptime_7d != None %}{{ uptime_7d }}%{% else %}&mdash;{% endif %}</div>
             <div style="display: flex; gap: 4px;">
                 {% if uptime_7d != None %}
-                {% if uptime_7d >= sla_target %}<span class="sla-badge sla-badge-met">Goal</span>{% else %}<span class="sla-badge sla-badge-below">Below</span>{% endif %}
-                {% if uptime_7d >= sla_minimum %}<span class="sla-badge sla-badge-met">Commit</span>{% else %}<span class="sla-badge sla-badge-breach">Breach</span>{% endif %}
+                {% if uptime_7d >= sla_target %}{% status_badge "Goal" "success" %}{% else %}{% status_badge "Below" "warning" %}{% endif %}
+                {% if uptime_7d >= sla_minimum %}{% status_badge "Commit" "success" %}{% else %}{% status_badge "Breach" "error" %}{% endif %}
                 {% endif %}
             </div>
         </div>

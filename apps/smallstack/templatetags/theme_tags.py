@@ -249,3 +249,45 @@ def localtime_tooltip(context, dt, fmt="M d, Y g:i A T", force_tooltip=False) ->
         f"UTC: {utc_str}",
         user_str,
     )
+
+
+# Map common status keywords -> semantic badge variant. Used when a call site
+# passes the raw status as the label and lets the tag infer the colour.
+_BADGE_VARIANTS = {"success", "warning", "error", "info", "neutral"}
+_STATUS_VARIANT_MAP = {
+    # success / healthy
+    "pass": "success", "ok": "success", "active": "success", "success": "success",
+    "up": "success", "operational": "success", "healthy": "success", "met": "success",
+    "commit": "success", "enabled": "success", "yes": "success",
+    # warning / degraded
+    "warn": "warning", "warning": "warning", "degraded": "warning", "below": "warning",
+    "pending": "warning", "partial": "warning",
+    # error / failed
+    "fail": "error", "failed": "error", "failure": "error", "error": "error",
+    "down": "error", "revoked": "error", "breach": "error", "missing": "error",
+    "disabled": "error", "no": "error",
+    # neutral / informational
+    "pruned": "neutral", "neutral": "neutral", "staff": "neutral", "unknown": "neutral",
+    "info": "info",
+}
+
+
+@register.simple_tag
+def status_badge(label, variant=None):
+    """Render a consistent status pill.
+
+    ``{% status_badge "active" %}`` -> ``<span class="badge badge-success">active</span>``
+    (variant inferred from the label via ``_STATUS_VARIANT_MAP``).
+
+    Pass ``variant`` explicitly when the label is not a known keyword — e.g.
+    HTTP codes: ``{% status_badge code "warning" %}`` for a 4xx.
+    """
+    from django.utils.html import format_html
+
+    label = "" if label is None else str(label)
+    if variant is None:
+        variant = _STATUS_VARIANT_MAP.get(label.strip().lower(), "neutral")
+    variant = str(variant).lower()
+    if variant not in _BADGE_VARIANTS:
+        variant = "neutral"
+    return format_html('<span class="badge badge-{}">{}</span>', variant, label)

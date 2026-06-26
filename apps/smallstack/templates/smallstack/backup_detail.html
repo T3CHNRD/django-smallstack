@@ -35,17 +35,7 @@
         text-transform: uppercase;
         letter-spacing: 0.3px;
     }
-    .status-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    .status-success { background: color-mix(in srgb, var(--success-fg) 15%, var(--card-bg)); color: var(--success-fg); }
-    .status-failed { background: color-mix(in srgb, var(--error-fg) 15%, var(--card-bg)); color: var(--error-fg); }
-    .status-pruned { background: color-mix(in srgb, var(--body-quiet-color) 15%, var(--card-bg)); color: var(--body-quiet-color); }
+    /* Status pills now use the shared .badge system (status_badge tag). */
 
     /* Timeline */
     .timeline { position: relative; padding: 0; margin: 0; list-style: none; }
@@ -195,9 +185,9 @@
                         <td class="label-cell">Status</td>
                         <td>
                             {% if record.is_pruned %}
-                                <span class="status-badge status-pruned">pruned</span>
+                                {% status_badge "pruned" %}
                             {% else %}
-                                <span class="status-badge status-{{ record.status }}">{{ record.status }}</span>
+                                {% status_badge record.status %}
                             {% endif %}
                         </td>
                     </tr>

@@ -5,28 +5,10 @@ Status badge uses the canonical status colors used by Backups.
 {% endcomment %}
 <tr>
   <td style="padding: 12px 16px; vertical-align: top;">
-    {% if entry.status == "PASS" %}
-      <span style="
-        display: inline-block; padding: 2px 8px; border-radius: 4px;
-        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
-        background: color-mix(in srgb, var(--success-fg) 15%, var(--card-bg));
-        color: var(--success-fg);
-      ">✓ PASS</span>
-    {% elif entry.status == "WARN" %}
-      <span style="
-        display: inline-block; padding: 2px 8px; border-radius: 4px;
-        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
-        background: color-mix(in srgb, var(--message-warning-bg, orange) 18%, var(--card-bg));
-        color: var(--message-warning-bg, orange);
-      ">⚠ WARN</span>
-    {% else %}
-      <span style="
-        display: inline-block; padding: 2px 8px; border-radius: 4px;
-        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
-        background: color-mix(in srgb, var(--delete-button-bg, red) 15%, var(--card-bg));
-        color: var(--delete-button-bg, red);
-      ">✗ FAIL</span>
-    {% endif %}
+    {% load theme_tags %}
+    {% if entry.status == "PASS" %}{% status_badge "✓ PASS" "success" %}
+    {% elif entry.status == "WARN" %}{% status_badge "⚠ WARN" "warning" %}
+    {% else %}{% status_badge "✗ FAIL" "error" %}{% endif %}
   </td>
   <td style="padding: 12px 16px; vertical-align: top; font-weight: 600;">
     {{ entry.name }}

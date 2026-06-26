@@ -42,36 +42,12 @@ Reads:
           <td style="padding: 8px 16px; font-size: 0.85rem;">{{ token.user.username }}</td>
           {% endif %}
           <td style="padding: 8px 16px;">
-            <span style="
-              display: inline-block; padding: 1px 7px; border-radius: 10px;
-              font-size: 0.7rem; font-weight: 700;
-              {% if token.access_level == 'auth' %}
-                background: color-mix(in srgb, var(--delete-button-bg, red) 18%, var(--card-bg));
-                color: var(--delete-button-bg, red);
-              {% elif token.access_level == 'staff' %}
-                background: color-mix(in srgb, var(--message-warning-bg, orange) 18%, var(--card-bg));
-                color: var(--message-warning-bg, orange);
-              {% else %}
-                background: color-mix(in srgb, var(--success-fg) 15%, var(--card-bg));
-                color: var(--success-fg);
-              {% endif %}
-            ">{{ token.access_level }}</span>
+            {% if token.access_level == 'auth' %}{% status_badge token.access_level "error" %}
+            {% elif token.access_level == 'staff' %}{% status_badge token.access_level "warning" %}
+            {% else %}{% status_badge token.access_level "success" %}{% endif %}
           </td>
           <td style="padding: 8px 16px;">
-            {% if token.is_active %}
-              <span style="
-                display: inline-block; padding: 1px 7px; border-radius: 10px;
-                font-size: 0.7rem; font-weight: 700;
-                background: color-mix(in srgb, var(--success-fg) 15%, var(--card-bg));
-                color: var(--success-fg);
-              ">active</span>
-            {% else %}
-              <span style="
-                display: inline-block; padding: 1px 7px; border-radius: 10px;
-                font-size: 0.7rem; font-weight: 700;
-                color: var(--body-quiet-color);
-              ">revoked</span>
-            {% endif %}
+            {% if token.is_active %}{% status_badge "active" "success" %}{% else %}{% status_badge "revoked" "neutral" %}{% endif %}
           </td>
           <td style="padding: 8px 16px; text-align: right; font-size: 0.85rem;">{{ token.request_count }}</td>
           <td style="padding: 8px 16px; font-size: 0.8rem; color: var(--body-quiet-color);">
