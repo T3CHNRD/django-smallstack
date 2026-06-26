@@ -77,6 +77,41 @@ def send_invite_email(request, user, inviter=None):
     )
 
 
+def send_setup_or_reset(request, user) -> str | None:
+    """Email ``user`` the right "set your password" link.
+
+    Returns "invite" (user never set a password — resend the invite),
+    "reset" (existing account — standard branded reset email), or None
+    (no email address on file). Used by the staff "Send link" action.
+    """
+    if not user.email:
+        return None
+    if not user.has_usable_password():
+        inviter = request.user.get_full_name() or request.user.get_username()
+        send_invite_email(request, user, inviter=inviter)
+        return "invite"
+
+    from django.contrib.auth.forms import PasswordResetForm
+
+    form = PasswordResetForm({"email": user.email})
+    if not form.is_valid():
+        return None
+    form.save(
+        request=request,
+        use_https=request.is_secure(),
+        from_email=getattr(django_settings, "DEFAULT_FROM_EMAIL", None),
+        email_template_name="registration/password_reset_email.html",
+        html_email_template_name="registration/password_reset_email_html.html",
+        subject_template_name="registration/password_reset_subject.txt",
+        extra_email_context={
+            "site_name": _site_name(),
+            "brand_name": getattr(django_settings, "BRAND_NAME", "SmallStack"),
+            "brand_accent": getattr(django_settings, "BRAND_EMAIL_ACCENT", "#10b981"),
+        },
+    )
+    return "reset"
+
+
 class InviteUserView(StaffRequiredMixin, FormView):
     """Staff create a user by email; the user sets their own password via link."""
 
