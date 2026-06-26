@@ -12,6 +12,7 @@ from .admin_views import (
     APIAdminEndpointsView,
     APIAdminHealthView,
     APIAdminSelfTestView,
+    APIAdminStatDetailView,
 )
 
 app_name = "api_admin"
@@ -19,6 +20,7 @@ app_name = "api_admin"
 urlpatterns = [
     path("", APIAdminHealthView.as_view(), name="health"),
     path("health/", APIAdminHealthView.as_view(), name="health_alias"),
+    path("health/stats/<str:stat_type>/", APIAdminStatDetailView.as_view(), name="stat_detail"),
     path("endpoints/", APIAdminEndpointsView.as_view(), name="endpoints"),
     path("activity/", APIAdminActivityView.as_view(), name="activity"),
     # POST-only — backs the "Run Self-Test" button on Health.

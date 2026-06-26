@@ -85,36 +85,23 @@
    ════════════════════════════════════════════════════════════════════════ #}
 {% block content %}
 
-{# ── Stat Cards ─────────────────────────────────────────────────────── #}
+{# ── Stat Cards (use the {% templatetag openblock %} stat_card {% templatetag closeblock %} tag — see docs/skills/dashboard-cards.md) ──
+   Static metrics. `state` ∈ success|warning|danger|muted; `unit` adds a suffix. #}
 {#
 <div class="stat-cards">
-    <div class="stat-card">
-        <div class="stat-card-value">42</div>
-        <div class="stat-card-label">Total Items</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value">7</div>
-        <div class="stat-card-label">Active</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value">0</div>
-        <div class="stat-card-label">Errors</div>
-    </div>
+    {% stat_card value=42 label="Total Items" %}
+    {% stat_card value=7 label="Active" state="success" %}
+    {% stat_card value=0 label="Errors" state="muted" %}
 </div>
 #}
 
-{# ── Clickable Stat Cards (open modal on click) ────────────────────── #}
+{# ── Clickable Stat Cards (open the drill-down modal on click) ──────────
+   Add detail_url (+ optional detail_arg) and the tag wires hx-get / onclick.
+   The modal is global — no include needed. The endpoint returns render_stat_list(). #}
 {#
 <div class="stat-cards">
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'app:stat_detail' 'metric' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('Metric Details')">
-        <div class="stat-card-value">42</div>
-        <div class="stat-card-label">Metric</div>
-    </div>
+    {% stat_card value=42 label="Metric" title="Metric Details" detail_url="app:stat_detail" detail_arg="metric" %}
 </div>
-{% include "smallstack/includes/stat_modal.html" %}
 #}
 
 {# ── Card with Table ────────────────────────────────────────────────── #}

@@ -45,6 +45,7 @@ When an AI agent is asked to modify or extend this project, these files help it:
 | [api-discovery.md](api-discovery.md) | API discovery endpoints: schema introspection, OpenAPI spec, OPTIONS metadata |
 | [custom-api-endpoints.md](custom-api-endpoints.md) | Building non-CRUD API endpoints with the `@api_view` decorator |
 | [api-doctor.md](api-doctor.md) | Debug API setup + threat signals via `/smallstack/api/` (Health + Activity) and `python manage.py api_doctor` |
+| [dashboard-cards.md](dashboard-cards.md) | **The stat-card standard**: the `{% stat_card %}` tag, the global drill-down modal, and the `render_stat_list` helper for the metric tiles atop dashboard pages |
 | [dashboard-widgets.md](dashboard-widgets.md) | Dashboard widget protocol: `DashboardWidget` class, Explorer vs standalone registration, data layer, REST API |
 | [card-displays.md](card-displays.md) | Card grid displays: `CardDisplay` (key-value), `AvatarCardDisplay`, authoring new card variants |
 | [calendar-displays.md](calendar-displays.md) | Month-grid calendar display: `CalendarDisplay` config, ranged vs single-date events, month navigation |
@@ -111,7 +112,8 @@ AI agents should read relevant skill files before making changes to the correspo
 - Before integrating with the SmallStack API → read `api-discovery.md`
 - Before building custom (non-CRUD) API endpoints → read `custom-api-endpoints.md`
 - Before debugging an API setup, an empty Swagger, or a "weird traffic" report → read `api-doctor.md`
-- Before adding dashboard widgets → read `dashboard-widgets.md`
+- Before adding stat cards / metric tiles + drill-down modals to a dashboard page → read `dashboard-cards.md`
+- Before adding dashboard widgets (the `/smallstack/` central dashboard data protocol) → read `dashboard-widgets.md`
 - Before configuring or building card-grid list displays → read `card-displays.md`
 - Before adding a month-grid calendar to a model → read `calendar-displays.md`
 - Before updating docs after code changes → read `update-docs-and-skills.md`
@@ -136,7 +138,8 @@ Multi-skill recipes for the headline use cases. Each row is "pick this combinati
 | **Custom non-CRUD tool** (a "send-email" or "regenerate-report" MCP/REST action) | `custom-api-endpoints.md` (for REST) → `mcp/write-a-custom-tool.md` (for MCP) → `mcp/enable-mcp-for-a-model.md` (for the auth model) |
 | **OAuth-issued tokens via the Connectors UI** (Claude Desktop calling your CRUDView) | `mcp/connect-claude-desktop.md` → `mcp/enable-mcp-for-a-model.md` → `mcp/verify-mcp.md` |
 | **Theme-correct page across all five palettes** (your custom landing page that doesn't break on `orange`) | `modern-dark-theme.md` → `screenshot-workflow.md` (for the palette-cycle verification) |
-| **Add a per-model dashboard widget** (a stat card on `/smallstack/` that summarises your data) | `dashboard-widgets.md` → `crud-views.md` (for `get_list_queryset` if the widget should respect tenancy) |
+| **Add clickable metric tiles + drill-down modals** (the stat cards atop an app's own dashboard page) | `dashboard-cards.md` → `htmx-patterns.md` (for the partial-response endpoint) |
+| **Add a per-model dashboard widget** (a tile on the central `/smallstack/` dashboard that summarises your data) | `dashboard-widgets.md` → `crud-views.md` (for `get_list_queryset` if the widget should respect tenancy) |
 | **Recurring/scheduled job** (today: cron + management command; v0.12.0: `@scheduled` primitive) | `background-tasks.md` (read the "no recurring primitive yet" note) |
 
 If a goal isn't covered here yet, the canonical decision tree is in `mcp/build-mcp-solution.md` for AI-touching features, or `from-zero-to-running.md` for project-shape questions.

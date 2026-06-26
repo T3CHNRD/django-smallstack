@@ -152,32 +152,14 @@
 {% endblock %}
 
 {% block content %}
-<!-- Summary stats -->
+<!-- Summary stats ({% templatetag openblock %} stat_card {% templatetag closeblock %} tag) -->
 <div class="stat-cards" style="margin-bottom: 24px;">
-    <div class="stat-card {% if status == 'operational' %}stat-card--success{% elif status == 'degraded' %}stat-card--warning{% elif status == 'down' %}stat-card--danger{% else %}stat-card--muted{% endif %}">
-        <div class="stat-card-value">{{ status_label }}</div>
-        <div class="stat-card-label">Current Status{% if active_maintenance %} <span style="color: var(--warning-fg);">(Maint)</span>{% endif %}</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value" style="color: {{ uptime_overall_color }};">{% if uptime_overall != None %}{{ uptime_overall }}%{% else %}&mdash;{% endif %}</div>
-        <div class="stat-card-label">Overall{% if monitoring_days %} ({{ monitoring_days }}d){% endif %}</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value" style="color: {{ uptime_24h_color }};">{% if uptime_24h != None %}{{ uptime_24h }}%{% else %}&mdash;{% endif %}</div>
-        <div class="stat-card-label">Uptime (24h)</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value" style="color: {{ uptime_7d_color }};">{% if uptime_7d != None %}{{ uptime_7d }}%{% else %}&mdash;{% endif %}</div>
-        <div class="stat-card-label">Uptime (7d)</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value">{{ response_time_ms }}<span style="font-size: 0.9rem; font-weight: 600;">ms</span></div>
-        <div class="stat-card-label">Last Response</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value">{{ avg_response_time }}<span style="font-size: 0.9rem; font-weight: 600;">ms</span></div>
-        <div class="stat-card-label">Avg Response</div>
-    </div>
+    {% stat_card value=status_label label=status_card_label title="Recent Incidents" state=status_state detail_url="heartbeat:incidents" %}
+    {% stat_card value=uptime_overall_display label=overall_label state=uptime_overall_state %}
+    {% stat_card value=uptime_24h_display label="Uptime (24h)" state=uptime_24h_state %}
+    {% stat_card value=uptime_7d_display label="Uptime (7d)" state=uptime_7d_state %}
+    {% stat_card value=response_time_ms label="Last Response" unit="ms" %}
+    {% stat_card value=avg_response_time label="Avg Response" unit="ms" %}
 </div>
 
 <!-- Top-level view switcher -->

@@ -48,24 +48,12 @@
 {% block content %}
 {% include "api/admin/_nav.html" %}
 
-{# ── Stat cards: PASS / WARN / FAIL / Endpoints ─────────────────── #}
+{# ── Stat cards: PASS / WARN / FAIL / Endpoints ({% templatetag openblock %} stat_card {% templatetag closeblock %} tag) ──── #}
 <div class="stat-cards" style="margin-bottom: 24px;">
-  <div class="stat-card stat-card--success">
-    <div class="stat-card-value">{{ pass_count }}</div>
-    <div class="stat-card-label">Passing checks</div>
-  </div>
-  <div class="stat-card {% if warn_count %}stat-card--warning{% else %}stat-card--muted{% endif %}">
-    <div class="stat-card-value">{{ warn_count }}</div>
-    <div class="stat-card-label">Warnings</div>
-  </div>
-  <div class="stat-card {% if fail_count %}stat-card--danger{% else %}stat-card--muted{% endif %}">
-    <div class="stat-card-value">{{ fail_count }}</div>
-    <div class="stat-card-label">Failures</div>
-  </div>
-  <a href="{% url 'api_admin:endpoints' %}" class="stat-card stat-card-clickable" style="text-decoration: none;">
-    <div class="stat-card-value">{{ endpoint_count }}</div>
-    <div class="stat-card-label">Registered endpoints →</div>
-  </a>
+  {% stat_card value=pass_count label="Passing checks" title="Passing Checks" state="success" detail_url="api_admin:stat_detail" detail_arg="pass" %}
+  {% stat_card value=warn_count label="Warnings" title="Warnings" state=warn_count|yesno:"warning,muted" detail_url="api_admin:stat_detail" detail_arg="warn" %}
+  {% stat_card value=fail_count label="Failures" title="Failures" state=fail_count|yesno:"danger,muted" detail_url="api_admin:stat_detail" detail_arg="fail" %}
+  {% stat_card value=endpoint_count label="Registered endpoints →" link_url="api_admin:endpoints" %}
 </div>
 
 {# ── Self-test result swap target ──────────────────────────────── #}

@@ -14,7 +14,8 @@ When the user asks you to do any of these, read the matching skill file BEFORE w
 | Create a new Django app with admin pages | `docs/skills/django-apps.md` |
 | Add a CRUDView (model → admin + REST + MCP) | `docs/skills/django-apps.md` + `apps/smallstack/docs/building-crud-pages.md` |
 | Add keyword search + an MCP search tool to a model | `docs/skills/search.md` |
-| Add a dashboard widget | `docs/skills/dashboard-widgets.md` |
+| Add stat cards / metric tiles + drill-down modals to a dashboard page | `docs/skills/dashboard-cards.md` |
+| Add a dashboard widget (the central `/smallstack/` dashboard) | `docs/skills/dashboard-widgets.md` |
 | Expose a model to AI clients via MCP | `docs/skills/mcp/build-mcp-solution.md` |
 | Add a custom REST endpoint (non-CRUD) | `docs/skills/custom-api-endpoints.md` |
 | Debug a "Swagger is empty" / "MCP can't see my tools" / "weird traffic" report | `docs/skills/api-doctor.md` or `docs/skills/mcp/debug-mcp-failure.md` |

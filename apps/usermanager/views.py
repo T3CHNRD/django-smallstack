@@ -8,12 +8,13 @@ from django.db.models import Avg, Count, Max
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.html import format_html, format_html_join
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from apps.activity.models import RequestLog
 from apps.smallstack.crud import Action, CRUDView
 from apps.smallstack.mixins import StaffRequiredMixin
+from apps.smallstack.stat_lists import render_stat_list, stat_list_row
 
 from .forms import UserAccountForm, UserProfileForm
 
@@ -258,19 +259,13 @@ def _get_user_activity_stats(user_obj) -> dict[str, Any]:
     }
 
 
-def _user_list_row(u) -> str:
+def _user_list_row(u):
     """A clickable user row for the stat modal: avatar · name · meta · chevron."""
-    return format_html(
-        '<a class="stat-list-row" href="{}">'
-        '<span class="stat-list-avatar" aria-hidden="true">{}</span>'
-        '<span class="stat-list-name">{}</span>'
-        '<span class="stat-list-meta">{}</span>'
-        '<span class="stat-list-chevron" aria-hidden="true">→</span>'
-        "</a>",
-        reverse("manage/users-update", args=[u.pk]),
-        (u.username[:2] or "?").upper(),
+    return stat_list_row(
         u.username,
-        u.email or "No email on file",
+        href=reverse("manage/users-update", args=[u.pk]),
+        avatar=True,
+        meta=u.email or "No email on file",
     )
 
 
@@ -307,25 +302,15 @@ def user_stat_detail(request, stat_type: str) -> HttpResponse:
         )
         tz_dashboard = reverse("manage/users-timezones")
         rows = [
-            format_html(
-                # Links into the Timezones dashboard filtered to this zone
-                # (its search matches the raw IANA name, e.g. America/New_York).
-                '<a class="stat-list-row" href="{}?{}">'
-                '<span class="stat-list-name">{}</span>'
-                '<span class="stat-list-count">{}</span>'
-                '<span class="stat-list-chevron" aria-hidden="true">→</span>'
-                "</a>",
-                tz_dashboard,
-                urlencode({"q": t["timezone"]}),
+            # Links into the Timezones dashboard filtered to this zone
+            # (its search matches the raw IANA name, e.g. America/New_York).
+            stat_list_row(
                 t["timezone"].split("/")[-1].replace("_", " "),
-                t["count"],
+                href=f"{tz_dashboard}?{urlencode({'q': t['timezone']})}",
+                count=t["count"],
             )
             for t in tz_counts
         ]
         empty_msg = "No timezones configured."
 
-    if rows:
-        body = format_html('<div class="stat-list">{}</div>', format_html_join("", "{}", ((r,) for r in rows)))
-    else:
-        body = format_html('<p class="stat-list-empty">{}</p>', empty_msg)
-    return HttpResponse(body)
+    return render_stat_list(rows, empty=empty_msg)

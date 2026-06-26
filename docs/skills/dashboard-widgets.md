@@ -1,5 +1,11 @@
 # Skill: Dashboard Widgets
 
+> **Not the same as stat cards.** This skill is the **data protocol** behind the
+> central `/smallstack/` dashboard — a registry of `DashboardWidget` objects. If
+> you want the clickable **metric tiles** at the top of an app's *own* dashboard
+> page (and their drill-down modals), that's the `{% stat_card %}` tag — see
+> **[dashboard-cards.md](dashboard-cards.md)**. The two compose but are distinct.
+
 SmallStack's dashboard (`/smallstack/`) is assembled from a registry of widgets. Apps publish widgets either by attaching them to an Explorer-registered `ModelAdmin`, or by registering standalone widgets in their `AppConfig.ready()`. The same data layer also powers the per-group/per-app widget toggle in Explorer and a REST API endpoint.
 
 ## Overview

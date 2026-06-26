@@ -272,6 +272,72 @@ _STATUS_VARIANT_MAP = {
 }
 
 
+@register.inclusion_tag("smallstack/includes/stat_card.html")
+def stat_card(
+    value,
+    label,
+    title=None,
+    detail_url=None,
+    detail_arg=None,
+    link_url=None,
+    link_arg=None,
+    state=None,
+    unit=None,
+):
+    """Render a dashboard stat card.
+
+    Three modes, picked by which argument you pass:
+
+    Static metric (no interaction)::
+
+        {% stat_card value=count label="Avg Response" unit="ms" %}
+
+    Drill-down (opens the always-present modal via htmx)::
+
+        {% stat_card value=count label="Users" title="All Users"
+                     detail_url="manage/users-stat-detail" detail_arg="total" %}
+
+    Navigation (plain link to a full page — for content too large for a modal)::
+
+        {% stat_card value=count label="Endpoints →" link_url="api_admin:endpoints" %}
+
+    Args:
+        value: The big number / metric.
+        label: The small mono caption below the value.
+        title: Modal heading (drill-down mode). Defaults to ``label``.
+        detail_url: URL name of the ``hx-get`` drill-down endpoint. The endpoint
+            should return a stat list (see ``render_stat_list``) or a ``<table>``.
+        detail_arg: Single positional URL argument for ``detail_url``.
+        link_url: URL name to navigate to (navigation mode). Mutually exclusive
+            with ``detail_url`` — ``detail_url`` wins if both are given.
+        link_arg: Single positional URL argument for ``link_url``.
+        state: ``success`` | ``warning`` | ``danger`` | ``muted`` — drives the
+            accent stripe and value color. Anything else is ignored.
+        unit: Small trailing unit rendered after the value (e.g. ``ms``).
+
+    The clickable wiring (``hx-get`` / ``hx-target`` / ``onclick``) and the modal
+    include are handled for you — never hand-write them. See
+    ``docs/skills/dashboard-cards.md``.
+    """
+    href = None
+    mode = None
+    if detail_url:
+        href = reverse(detail_url, args=[detail_arg]) if detail_arg is not None else reverse(detail_url)
+        mode = "modal"
+    elif link_url:
+        href = reverse(link_url, args=[link_arg]) if link_arg is not None else reverse(link_url)
+        mode = "link"
+    return {
+        "value": value,
+        "label": label,
+        "title": title or label,
+        "href": href,
+        "mode": mode,
+        "state": state if state in {"success", "warning", "danger", "muted"} else None,
+        "unit": unit,
+    }
+
+
 @register.simple_tag
 def status_badge(label, variant=None):
     """Render a consistent status pill.

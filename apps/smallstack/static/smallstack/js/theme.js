@@ -447,6 +447,33 @@
     }
 
     // ============================================
+    // Stat-card drill-down modal
+    // ============================================
+    // The modal markup lives in base.html (included globally). Clickable stat
+    // cards built with {% stat_card %} call openStatModal() on click and let
+    // htmx swap the body. Exposed on window so inline onclick handlers reach it.
+
+    function openStatModal(title) {
+        var titleEl = document.getElementById('stat-modal-title');
+        var modal = document.getElementById('stat-modal');
+        if (!modal) return;
+        if (titleEl) titleEl.textContent = title;
+        modal.classList.add('open');
+    }
+
+    function closeStatModal() {
+        var modal = document.getElementById('stat-modal');
+        if (modal) modal.classList.remove('open');
+    }
+
+    window.openStatModal = openStatModal;
+    window.closeStatModal = closeStatModal;
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeStatModal();
+    });
+
+    // ============================================
     // Initialize Everything
     // ============================================
 

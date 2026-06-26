@@ -94,6 +94,9 @@
         {% include "smallstack/includes/cookie_banner.html" %}
     </div>
 
+    {# Shared stat-card drill-down modal — always present so {% stat_card %} just works #}
+    {% include "smallstack/includes/stat_modal.html" %}
+
     <!-- Theme configuration -->
     <script>
         window.SMALLSTACK = {

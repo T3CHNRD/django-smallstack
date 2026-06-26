@@ -39,32 +39,12 @@
 {% endblock %}
 
 {% block content %}
-{# ── Stat cards (clickable → drill-down modal) ──────────────── #}
+{# ── Stat cards ({% templatetag openblock %} stat_card {% templatetag closeblock %} tag → drill-down modal) ──────────────── #}
 <div class="stat-cards" style="margin-bottom: 24px;">
-  <div class="stat-card stat-card-clickable" style="cursor: pointer;"
-       hx-get="{% url 'tokenmgr:token-stat-detail' 'total' %}" hx-target="#stat-modal-body"
-       onclick="openStatModal('{% if request.user.is_staff %}All Tokens{% else %}Your Tokens{% endif %}')">
-    <div class="stat-card-value">{{ overview_stats.total_tokens }}</div>
-    <div class="stat-card-label">{% if request.user.is_staff %}All tokens{% else %}Your tokens{% endif %}</div>
-  </div>
-  <div class="stat-card stat-card--success stat-card-clickable" style="cursor: pointer;"
-       hx-get="{% url 'tokenmgr:token-stat-detail' 'active' %}" hx-target="#stat-modal-body"
-       onclick="openStatModal('Active Tokens')">
-    <div class="stat-card-value">{{ overview_stats.active_tokens }}</div>
-    <div class="stat-card-label">Active</div>
-  </div>
-  <div class="stat-card stat-card--muted stat-card-clickable" style="cursor: pointer;"
-       hx-get="{% url 'tokenmgr:token-stat-detail' 'revoked' %}" hx-target="#stat-modal-body"
-       onclick="openStatModal('Revoked Tokens')">
-    <div class="stat-card-value">{{ overview_stats.revoked_tokens }}</div>
-    <div class="stat-card-label">Revoked</div>
-  </div>
-  <div class="stat-card stat-card-clickable" style="cursor: pointer;"
-       hx-get="{% url 'tokenmgr:token-stat-detail' 'volume' %}" hx-target="#stat-modal-body"
-       onclick="openStatModal('API Requests · 24h')">
-    <div class="stat-card-value">{{ overview_stats.volume_24h }}</div>
-    <div class="stat-card-label">Requests · 24h</div>
-  </div>
+  {% stat_card value=overview_stats.total_tokens label=request.user.is_staff|yesno:"All tokens,Your tokens" title=request.user.is_staff|yesno:"All Tokens,Your Tokens" detail_url="tokenmgr:token-stat-detail" detail_arg="total" %}
+  {% stat_card value=overview_stats.active_tokens label="Active" title="Active Tokens" state="success" detail_url="tokenmgr:token-stat-detail" detail_arg="active" %}
+  {% stat_card value=overview_stats.revoked_tokens label="Revoked" title="Revoked Tokens" state="muted" detail_url="tokenmgr:token-stat-detail" detail_arg="revoked" %}
+  {% stat_card value=overview_stats.volume_24h label="Requests · 24h" title="API Requests · 24h" detail_url="tokenmgr:token-stat-detail" detail_arg="volume" %}
 </div>
 
 <div class="card" id="crud-content">
@@ -91,5 +71,4 @@
   </div>
 </div>
 
-{% include "smallstack/includes/stat_modal.html" %}
 {% endblock %}

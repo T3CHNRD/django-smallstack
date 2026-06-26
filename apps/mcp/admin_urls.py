@@ -11,6 +11,7 @@ from .admin_views import (
     MCPAdminActivityView,
     MCPAdminHealthView,
     MCPAdminSelfTestView,
+    MCPAdminStatDetailView,
     MCPAdminToolDetailView,
     MCPAdminToolsView,
 )
@@ -20,6 +21,7 @@ app_name = "mcp_admin"
 urlpatterns = [
     path("", MCPAdminHealthView.as_view(), name="health"),
     path("health/", MCPAdminHealthView.as_view(), name="health_alias"),
+    path("health/stats/<str:stat_type>/", MCPAdminStatDetailView.as_view(), name="stat_detail"),
     path("tools/", MCPAdminToolsView.as_view(), name="tools"),
     path("tools/<str:name>/", MCPAdminToolDetailView.as_view(), name="tool_detail"),
     path("activity/", MCPAdminActivityView.as_view(), name="activity"),

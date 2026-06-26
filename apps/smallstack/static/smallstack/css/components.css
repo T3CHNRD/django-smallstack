@@ -1227,6 +1227,13 @@ ul.pagination li.active span {
     letter-spacing: -0.015em;
 }
 
+/* Trailing unit (e.g. "ms") after a stat value — subordinate to the number. */
+.stat-card-unit {
+    font-size: 0.55em;
+    color: var(--body-quiet-color);
+    margin-left: 2px;
+}
+
 .stat-card-label {
     font-family: var(--font-monospace);
     font-size: 0.68rem;

@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from apps.smallstack.mixins import StaffRequiredMixin
+from apps.smallstack.stat_lists import render_stat_list, stat_list_row
 
 from .models import Heartbeat, HeartbeatEpoch, MaintenanceWindow
 from .services import prune_old_heartbeats, run_heartbeat_check
@@ -76,6 +77,23 @@ def _sla_color(uptime_pct: float | None, use_target: bool = False) -> str:
             return "var(--success-fg)"
         else:
             return "var(--error-fg)"
+
+
+def _sla_state(uptime_pct: float | None, use_target: bool = False) -> str | None:
+    """Stat-card state name (success/warning/danger/muted) for an uptime value.
+
+    The discrete sibling of :func:`_sla_color` — feeds ``{% stat_card state=… %}``.
+    """
+    if uptime_pct is None:
+        return "muted"
+    target, minimum = _get_sla_targets()
+    if use_target:
+        if uptime_pct >= target:
+            return "success"
+        if uptime_pct >= minimum:
+            return "warning"
+        return "danger"
+    return "success" if uptime_pct >= minimum else "danger"
 
 
 def _get_status_data() -> dict[str, Any]:
@@ -199,10 +217,12 @@ def _add_sla_context(context: dict, use_target: bool = False) -> dict:
     context["sla_target"] = target
     context["sla_minimum"] = minimum
 
-    # Color each uptime value
+    # Color each uptime value (legacy inline-style pages) + a discrete state
+    # name (stat-card tag on the dashboard).
     for key in ("uptime_overall", "uptime_24h", "uptime_7d"):
         val = context.get(key)
         context[f"{key}_color"] = _sla_color(val, use_target=use_target)
+        context[f"{key}_state"] = _sla_state(val, use_target=use_target)
 
     return context
 
@@ -580,6 +600,16 @@ class HeartbeatDashboardView(StaffRequiredMixin, TemplateView):
         avg = Heartbeat.objects.all()[:60].aggregate(avg=Avg("response_time_ms"))
         context["avg_response_time"] = round(avg["avg"] or 0)
 
+        # Stat-card display helpers (consumed by {% stat_card %} on the dashboard).
+        _status_state = {"operational": "success", "degraded": "warning", "down": "danger"}
+        context["status_state"] = _status_state.get(context.get("status"), "muted")
+        context["status_card_label"] = "Current Status" + (" · Maint" if context.get("active_maintenance") else "")
+        _md = context.get("monitoring_days")
+        context["overall_label"] = f"Overall ({_md}d)" if _md else "Overall"
+        for key in ("uptime_overall", "uptime_24h", "uptime_7d"):
+            val = context.get(key)
+            context[f"{key}_display"] = f"{val}%" if val is not None else "—"
+
         # Timelines (same as status page)
         context["timeline"] = _build_minute_timeline(60)
         context["timeline_24h"] = _build_24h_timeline()
@@ -614,6 +644,25 @@ class HeartbeatDashboardView(StaffRequiredMixin, TemplateView):
         else:
             context["active_view"] = "timelines"
         return TemplateResponse(request, self.template_name, context)
+
+
+def heartbeat_incidents(request: HttpRequest) -> HttpResponse:
+    """htmx drill-down for the dashboard "Current Status" card: recent failures."""
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+
+        return HttpResponseForbidden("Staff access required.")
+
+    fails = Heartbeat.objects.filter(status="fail").order_by("-timestamp")[:50]
+    rows = [
+        stat_list_row(
+            localtime(b.timestamp).strftime("%b %d, %H:%M"),
+            meta=b.note or "Check failed",
+            count=f"{b.response_time_ms} ms" if b.response_time_ms else None,
+        )
+        for b in fails
+    ]
+    return render_stat_list(rows, empty="No failures recorded — all clear.")
 
 
 def maintenance_create(request: HttpRequest) -> HttpResponse | TemplateResponse:

@@ -24,12 +24,12 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.html import format_html, format_html_join
 from django.views import View
 from django.views.generic import FormView, TemplateView
 
 from apps.smallstack.crud import Action, CRUDView
 from apps.smallstack.models import APIToken
+from apps.smallstack.stat_lists import render_stat_list, stat_list_row
 
 from .forms import TokenCreateForm
 from .mixins import is_owner_or_staff
@@ -265,19 +265,13 @@ class TokenStatsView(LoginRequiredMixin, TemplateView):
         return context
 
 
-def _token_list_row(token, meta) -> str:
+def _token_list_row(token, meta):
     """A clickable token row for the stat modal: avatar · name · meta · chevron."""
-    return format_html(
-        '<a class="stat-list-row" href="{}">'
-        '<span class="stat-list-avatar" aria-hidden="true">{}</span>'
-        '<span class="stat-list-name">{}</span>'
-        '<span class="stat-list-meta">{}</span>'
-        '<span class="stat-list-chevron" aria-hidden="true">→</span>'
-        "</a>",
-        reverse("tokenmgr:tokens-detail", kwargs={"pk": token.pk}),
-        (token.name[:2] or "?").upper(),
+    return stat_list_row(
         token.name,
-        meta,
+        href=reverse("tokenmgr:tokens-detail", kwargs={"pk": token.pk}),
+        avatar=True,
+        meta=meta,
     )
 
 
@@ -326,17 +320,11 @@ def token_stat_detail(request, stat_type: str) -> HttpResponse:
             )
             tokens_by_id = {t.pk: t for t in qs}
             rows = [
-                format_html(
-                    '<a class="stat-list-row" href="{}">'
-                    '<span class="stat-list-avatar" aria-hidden="true">{}</span>'
-                    '<span class="stat-list-name">{}</span>'
-                    '<span class="stat-list-count">{}</span>'
-                    '<span class="stat-list-chevron" aria-hidden="true">→</span>'
-                    "</a>",
-                    reverse("tokenmgr:tokens-detail", kwargs={"pk": tid}),
-                    (tokens_by_id[tid].name[:2] or "?").upper(),
+                stat_list_row(
                     tokens_by_id[tid].name,
-                    cnt,
+                    href=reverse("tokenmgr:tokens-detail", kwargs={"pk": tid}),
+                    avatar=True,
+                    count=cnt,
                 )
                 for tid, cnt in sorted(counts.items(), key=lambda kv: -kv[1])
                 if tid in tokens_by_id
@@ -344,8 +332,4 @@ def token_stat_detail(request, stat_type: str) -> HttpResponse:
         except Exception:  # noqa: BLE001 — activity app optional / any query failure → empty
             rows = []
 
-    if rows:
-        body = format_html('<div class="stat-list">{}</div>', format_html_join("", "{}", ((r,) for r in rows)))
-    else:
-        body = format_html('<p class="stat-list-empty">{}</p>', empty_msg)
-    return HttpResponse(body)
+    return render_stat_list(rows, empty=empty_msg)

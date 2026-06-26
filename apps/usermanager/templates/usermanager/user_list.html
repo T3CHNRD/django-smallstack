@@ -30,41 +30,13 @@
 {% endblock %}
 
 {% block content %}
-<!-- Dashboard stat cards (editorial spec-card pattern) -->
+<!-- Dashboard stat cards ({% templatetag openblock %} stat_card {% templatetag closeblock %} tag) -->
 {% if dashboard_stats %}
 <div class="stat-cards" style="margin-bottom: 24px;">
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'manage/users-stat-detail' 'recent' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('Recent Users (30 Days)')"
-         style="cursor: pointer;">
-        <div class="stat-card-value">{{ dashboard_stats.recent }}</div>
-        <div class="stat-card-label">Recent · 30d</div>
-    </div>
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'manage/users-stat-detail' 'total' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('All Active Users')"
-         style="cursor: pointer;">
-        <div class="stat-card-value">{{ dashboard_stats.total }}</div>
-        <div class="stat-card-label">Total Users</div>
-    </div>
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'manage/users-stat-detail' 'staff' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('Staff Users')"
-         style="cursor: pointer;">
-        <div class="stat-card-value">{{ dashboard_stats.staff }}</div>
-        <div class="stat-card-label">Staff</div>
-    </div>
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'manage/users-stat-detail' 'timezones' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('Unique Timezones')"
-         style="cursor: pointer;">
-        <div class="stat-card-value">{{ dashboard_stats.unique_tz }}</div>
-        <div class="stat-card-label">Timezones</div>
-    </div>
+    {% stat_card value=dashboard_stats.recent label="Recent · 30d" title="Recent Users (30 Days)" detail_url="manage/users-stat-detail" detail_arg="recent" %}
+    {% stat_card value=dashboard_stats.total label="Total Users" title="All Active Users" detail_url="manage/users-stat-detail" detail_arg="total" %}
+    {% stat_card value=dashboard_stats.staff label="Staff" title="Staff Users" detail_url="manage/users-stat-detail" detail_arg="staff" %}
+    {% stat_card value=dashboard_stats.unique_tz label="Timezones" title="Unique Timezones" detail_url="manage/users-stat-detail" detail_arg="timezones" %}
 </div>
 {% endif %}
 
@@ -78,6 +50,5 @@
     </div>
 </div>
 
-{% include "smallstack/includes/stat_modal.html" %}
 {% include "smallstack/crud/includes/delete_modal.html" %}
 {% endblock %}

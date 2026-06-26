@@ -18,42 +18,12 @@
 <div id="panel-activity">
     <!-- Top-level stats -->
     <div class="stat-cards" style="margin-bottom: 24px;">
-        <div class="stat-card stat-card-clickable"
-             hx-get="{% url 'smallstack:backup_stat_detail' 'recent' %}"
-             hx-target="#stat-modal-body"
-             onclick="openStatModal('Recent Backups (24h)')">
-            <div class="stat-card-value">{{ recent_count }}</div>
-            <div class="stat-card-label">Recent (24h)</div>
-        </div>
-        <div class="stat-card stat-card--success stat-card-clickable"
-             hx-get="{% url 'smallstack:backup_stat_detail' 'success' %}"
-             hx-target="#stat-modal-body"
-             onclick="openStatModal('Successful Backups')">
-            <div class="stat-card-value">{{ success_count }}</div>
-            <div class="stat-card-label">Successful</div>
-        </div>
-        <div class="stat-card {% if failed_count %}stat-card--danger{% endif %} stat-card-clickable"
-             hx-get="{% url 'smallstack:backup_stat_detail' 'failed' %}"
-             hx-target="#stat-modal-body"
-             onclick="openStatModal('Failed Backups')">
-            <div class="stat-card-value">{{ failed_count }}</div>
-            <div class="stat-card-label">Failed</div>
-        </div>
-        <div class="stat-card stat-card-clickable"
-             hx-get="{% url 'smallstack:backup_stat_detail' 'pruned' %}"
-             hx-target="#stat-modal-body"
-             onclick="openStatModal('Pruned Backups')">
-            <div class="stat-card-value">{{ pruned_count }}</div>
-            <div class="stat-card-label">Pruned</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-card-value">{{ avg_duration }}<span style="font-size: 0.9rem; font-weight: 600;">ms</span></div>
-            <div class="stat-card-label">Avg Duration</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-card-value">{{ total_backup_size|filesizeformat }}</div>
-            <div class="stat-card-label">Total Size</div>
-        </div>
+        {% stat_card value=recent_count label="Recent (24h)" title="Recent Backups (24h)" detail_url="smallstack:backup_stat_detail" detail_arg="recent" %}
+        {% stat_card value=success_count label="Successful" title="Successful Backups" state="success" detail_url="smallstack:backup_stat_detail" detail_arg="success" %}
+        {% stat_card value=failed_count label="Failed" title="Failed Backups" state=failed_count|yesno:"danger," detail_url="smallstack:backup_stat_detail" detail_arg="failed" %}
+        {% stat_card value=pruned_count label="Pruned" title="Pruned Backups" detail_url="smallstack:backup_stat_detail" detail_arg="pruned" %}
+        {% stat_card value=avg_duration label="Avg Duration" unit="ms" %}
+        {% stat_card value=total_backup_size|filesizeformat label="Total Size" %}
     </div>
 
     <!-- Backup History -->

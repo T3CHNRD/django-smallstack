@@ -18,9 +18,41 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.http import Http404, HttpResponse
 from django.views.generic import TemplateView, View
 
 from apps.smallstack.mixins import StaffRequiredMixin
+from apps.smallstack.stat_lists import render_stat_list, stat_list_row
+
+
+def _build_api_report() -> list[dict]:
+    """Run the api_doctor checks and return the report list.
+
+    Same ``_check_*`` methods, same report shape the CLI prints — minus the
+    self-test (HTTP + DB). Shared by the health page and its stat-card
+    drill-downs.
+    """
+    from apps.api.management.commands.api_doctor import Command
+
+    cmd = Command()
+    report: list[dict] = []
+    cmd._check_openapi_package(report)
+    cmd._check_dependencies(report)
+    cmd._check_registry(report)
+    cmd._check_urls(report)
+    cmd._check_swagger_redoc(report)
+    cmd._check_openapi_validity(report)
+    cmd._check_endpoint_consistency(report)
+    cmd._check_orphans(report)
+    cmd._check_token_auth(report)
+    return report
+
+
+def _detail_summary(detail) -> str:
+    """Condense a check's ``detail`` (str or dict) into a one-line meta string."""
+    if isinstance(detail, dict):
+        return ", ".join(f"{k}: {v}" for k, v in detail.items())
+    return "" if detail is None else str(detail)
 
 
 class _AdminBase(StaffRequiredMixin, TemplateView):
@@ -63,33 +95,36 @@ class APIAdminHealthView(_AdminBase):
     template_name = "api/admin/health.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        from apps.api.management.commands.api_doctor import Command
-
         ctx = super().get_context_data(**kwargs)
         ctx["page"] = "health"
         # Quick "Open Swagger" link in the header — only when docs are wired.
         ctx["swagger_url"] = _resolve_service_url("api-docs")
 
-        # Rebind api_doctor's checks to an HTML surface — same `_check_*`
-        # methods, same `report` shape. Skip `_self_test` (HTTP + DB) —
-        # it lives behind the POST endpoint.
-        cmd = Command()
-        report: list[dict] = []
-        cmd._check_openapi_package(report)
-        cmd._check_dependencies(report)
-        cmd._check_registry(report)
-        cmd._check_urls(report)
-        cmd._check_swagger_redoc(report)
-        cmd._check_openapi_validity(report)
-        cmd._check_endpoint_consistency(report)
-        cmd._check_orphans(report)
-        cmd._check_token_auth(report)
+        report = _build_api_report()
         ctx["report"] = report
 
         ctx["pass_count"] = sum(1 for r in report if r["status"] == "PASS")
         ctx["warn_count"] = sum(1 for r in report if r["status"] == "WARN")
         ctx["fail_count"] = sum(1 for r in report if r["status"] == "FAIL")
         return ctx
+
+
+class APIAdminStatDetailView(StaffRequiredMixin, View):
+    """htmx drill-down for the health stat cards: ``pass`` / ``warn`` / ``fail``
+    list the individual checks in that status."""
+
+    def get(self, request, stat_type: str) -> HttpResponse:
+        status = {"pass": "PASS", "warn": "WARN", "fail": "FAIL"}.get(stat_type)
+        if status is None:
+            raise Http404("Unknown stat type")
+        report = _build_api_report()
+        rows = [
+            stat_list_row(r["name"], meta=_detail_summary(r.get("detail")))
+            for r in report
+            if r["status"] == status
+        ]
+        empty = {"PASS": "No passing checks.", "WARN": "No warnings.", "FAIL": "No failures."}[status]
+        return render_stat_list(rows, empty=empty)
 
 
 class APIAdminEndpointsView(_AdminBase):

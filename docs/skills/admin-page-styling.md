@@ -336,102 +336,33 @@ For lighter tables inside dashboard cards (no alternating rows), use `class="tab
 
 ## Stat Cards
 
-### Simple Stat Row
-
-For metric/KPI displays at the top of dashboard pages:
+The metric tiles at the top of dashboard pages — static, clickable into a
+drill-down modal, or linking to a full page — are rendered by the
+`{% stat_card %}` tag. **Don't hand-write `.stat-card` markup or the htmx
+wiring;** the full standard (the tag, the global drill-down modal, and the
+`render_stat_list` server helper) lives in **[dashboard-cards.md](dashboard-cards.md)**.
 
 ```django
+{% load theme_tags %}
 <div class="stat-cards">
-    <div class="stat-card">
-        <div class="stat-card-value">{{ total_count }}</div>
-        <div class="stat-card-label">Total Items</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value">{{ active_count }}</div>
-        <div class="stat-card-label">Active</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value">{{ error_count }}</div>
-        <div class="stat-card-label">Errors</div>
-    </div>
+  {% stat_card value=total_count label="Total Items" %}
+  {% stat_card value=active_count label="Active" state="success" %}
+  {% stat_card value=requests label="Requests" title="Recent Requests" detail_url="app:stat_detail" detail_arg="requests" %}
 </div>
 ```
+
+The drill-down modal is included globally in `base.html` — there is nothing to
+add to the page. Clickable cards point `detail_url` at an endpoint that returns a
+stat list or a `<table>`; see [dashboard-cards.md](dashboard-cards.md) for the
+endpoint helper and the full worked example.
 
 | Class | Purpose |
 |-------|---------|
 | `.stat-cards` | Flex container with gap and wrapping |
-| `.stat-card` | Individual card with border and background |
-| `.stat-card-value` | Large number (1.5rem, bold, primary color) |
+| `.stat-card` | Individual card (the tag emits this) |
+| `.stat-card-value` | Large number (bold, primary color) |
 | `.stat-card-label` | Muted uppercase label below the number |
-
-### Clickable Stat Cards with Modal
-
-For stat cards that open a detail table on click (like Activity dashboard). Clicking a card fires an HTMX GET, loads a table into the modal, and opens it:
-
-```django
-<div class="stat-cards">
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'app:stat_detail' 'requests' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('Recent Requests')">
-        <div class="stat-card-value">{{ total_requests }}</div>
-        <div class="stat-card-label">Requests</div>
-    </div>
-</div>
-
-<!-- Include the stat modal once at page bottom -->
-{% include "smallstack/includes/stat_modal.html" %}
-```
-
-| Class | Purpose |
-|-------|---------|
-| `.stat-card-clickable` | Adds hover effect and pointer cursor (defined in theme.css) |
-
-**How it works:**
-
-1. `hx-get` fetches an HTML fragment and injects it into `#stat-modal-body`
-2. `onclick="openStatModal('Title')"` sets the modal title and adds the `.open` class
-3. Escape key or clicking the backdrop closes the modal
-
-**The HTMX endpoint should return a plain HTML table** — no `<html>`, no layout, just the table:
-
-```python
-# views.py
-def stat_detail(request, stat_type):
-    if stat_type == "requests":
-        qs = RequestLog.objects.order_by("-timestamp")[:50]
-    return render(request, "app/partials/stat_table.html", {"items": qs})
-```
-
-```django
-{# partials/stat_table.html — just the table, no base template #}
-<table>
-    <thead><tr><th>Timestamp</th><th>Path</th><th>Status</th></tr></thead>
-    <tbody>
-    {% for item in items %}
-    <tr><td>{{ item.timestamp }}</td><td>{{ item.path }}</td><td>{{ item.status_code }}</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
-```
-
-The modal panel automatically styles tables inside it — sticky header, alternating row colors, hover highlights — all derived from `--primary` via `color-mix()`. No extra classes needed on the `<table>`.
-
-**Stat modal CSS classes** (in `theme.css`):
-
-| Class | Purpose |
-|-------|---------|
-| `.stat-modal` | Fixed full-screen overlay backdrop (`display: none` by default) |
-| `.stat-modal.open` | Shows the modal (`display: flex`) |
-| `.stat-modal-panel` | The card container — sized `min(80%, 90vw)` x `min(520px, 80vh)` |
-| `.stat-modal-panel table` | Full-width table with sticky header and themed row colors |
-
-**JavaScript API:**
-
-| Function | Description |
-|----------|-------------|
-| `openStatModal('Title')` | Sets the title and shows the modal |
-| `closeStatModal()` | Hides the modal and clears state |
+| `.stat-card--success` / `--warning` / `--danger` / `--muted` | The `state` accent |
 
 ## Badges
 

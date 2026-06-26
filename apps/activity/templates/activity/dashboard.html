@@ -22,50 +22,14 @@
 {% endblock %}
 
 {% block content %}
-<!-- ── Top-level stats (editorial spec-card pattern) ─────────────── -->
+<!-- ── Top-level stats ({% templatetag openblock %} stat_card {% templatetag closeblock %} tag) ─────────────── -->
 <div class="stat-cards" style="margin-bottom: 24px;">
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'activity:stat_detail' 'requests' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('Recent Requests')"
-         style="cursor: pointer;">
-        <div class="stat-card-value">{{ total_requests }}</div>
-        <div class="stat-card-label">Requests</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-value">{{ avg_response_time }}<span style="font-size: 0.55em; color: var(--body-quiet-color); margin-left: 2px;">ms</span></div>
-        <div class="stat-card-label">Avg Response</div>
-    </div>
-    <div class="stat-card stat-card-clickable {% if count_4xx %}stat-card--warning{% endif %}"
-         hx-get="{% url 'activity:stat_detail' '4xx' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('4xx Client Errors')">
-        <div class="stat-card-value">{{ count_4xx }}</div>
-        <div class="stat-card-label">4xx Errors</div>
-    </div>
-    <div class="stat-card stat-card-clickable {% if count_5xx %}stat-card--danger{% endif %}"
-         hx-get="{% url 'activity:stat_detail' '5xx' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('5xx Server Errors')">
-        <div class="stat-card-value">{{ count_5xx }}</div>
-        <div class="stat-card-label">5xx Errors</div>
-    </div>
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'activity:stat_detail' 'users' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('All Users')"
-         style="cursor: pointer;">
-        <div class="stat-card-value">{{ user_count }}</div>
-        <div class="stat-card-label">Users</div>
-    </div>
-    <div class="stat-card stat-card-clickable"
-         hx-get="{% url 'activity:stat_detail' 'new_signups' %}"
-         hx-target="#stat-modal-body"
-         onclick="openStatModal('New Users (30 Days)')"
-         style="cursor: pointer;">
-        <div class="stat-card-value">{{ recent_signup_count }}</div>
-        <div class="stat-card-label">New · 30d</div>
-    </div>
+    {% stat_card value=total_requests label="Requests" title="Recent Requests" detail_url="activity:stat_detail" detail_arg="requests" %}
+    {% stat_card value=avg_response_time label="Avg Response" unit="ms" %}
+    {% stat_card value=count_4xx label="4xx Errors" title="4xx Client Errors" detail_url="activity:stat_detail" detail_arg="4xx" state=count_4xx|yesno:"warning," %}
+    {% stat_card value=count_5xx label="5xx Errors" title="5xx Server Errors" detail_url="activity:stat_detail" detail_arg="5xx" state=count_5xx|yesno:"danger," %}
+    {% stat_card value=user_count label="Users" title="All Users" detail_url="activity:stat_detail" detail_arg="users" %}
+    {% stat_card value=recent_signup_count label="New · 30d" title="New Users (30 Days)" detail_url="activity:stat_detail" detail_arg="new_signups" %}
 </div>
 
 <!-- ── Two-column: Requests summary + Users summary ─────────────── -->
@@ -230,7 +194,6 @@
 </div>
 {% endif %}
 
-{% include "smallstack/includes/stat_modal.html" %}
 {% endblock %}
 
 {% block extra_js %}

@@ -22,10 +22,32 @@ from __future__ import annotations
 
 from typing import Any
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
+from django.urls import reverse
 from django.views.generic import TemplateView, View
 
 from apps.smallstack.mixins import StaffRequiredMixin
+from apps.smallstack.stat_lists import render_stat_list, stat_list_row
+
+
+def _build_mcp_report() -> list[dict]:
+    """Run the mcp_doctor checks and return the report list.
+
+    Same ``_check_*`` methods, same report shape the CLI prints — minus the
+    self-test (which mints DB rows / makes HTTP calls). Shared by the health
+    page and its stat-card drill-downs.
+    """
+    from apps.mcp.management.commands.mcp_doctor import Command
+
+    cmd = Command()
+    report: list[dict] = []
+    cmd._check_mcp_package(report)
+    cmd._check_settings(report)
+    cmd._check_registry(report)
+    cmd._check_urls(report)
+    cmd._check_tokens(report)
+    cmd._check_apitoken_admin(report)
+    return report
 
 
 class _AdminBase(StaffRequiredMixin, TemplateView):
@@ -47,24 +69,10 @@ class MCPAdminHealthView(_AdminBase):
     template_name = "mcp/admin/health.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        from apps.mcp.management.commands.mcp_doctor import Command
-
         ctx = super().get_context_data(**kwargs)
         ctx["page"] = "health"
 
-        # Rebind mcp_doctor's checks to an HTML surface — same exact
-        # `_check_*` methods, same exact `report` shape. Only difference:
-        # we skip `_self_test` here. It mints DB rows and makes HTTP calls,
-        # which is fine for a CLI invocation but not for every page load
-        # — it lives behind the POST endpoint instead.
-        cmd = Command()
-        report: list[dict] = []
-        cmd._check_mcp_package(report)
-        cmd._check_settings(report)
-        cmd._check_registry(report)
-        cmd._check_urls(report)
-        cmd._check_tokens(report)
-        cmd._check_apitoken_admin(report)
+        report = _build_mcp_report()
         ctx["report"] = report
 
         # Coarse summary numbers for the page header strip.
@@ -72,6 +80,48 @@ class MCPAdminHealthView(_AdminBase):
         ctx["warn_count"] = sum(1 for r in report if r["status"] == "WARN")
         ctx["fail_count"] = sum(1 for r in report if r["status"] == "FAIL")
         return ctx
+
+
+class MCPAdminStatDetailView(StaffRequiredMixin, View):
+    """htmx drill-down for the health stat cards.
+
+    ``pass`` / ``warn`` / ``fail`` list the checks in that status; ``tools``
+    lists the registered MCP tools (each links to its detail page).
+    """
+
+    def get(self, request, stat_type: str) -> HttpResponse:
+        if stat_type == "tools":
+            from apps.mcp.server import TOOL_REGISTRY
+
+            rows = [
+                stat_list_row(
+                    tool.name,
+                    href=reverse("mcp_admin:tool_detail", args=[tool.name]),
+                    avatar=True,
+                    meta=getattr(tool, "description", "") or "",
+                )
+                for tool in sorted(TOOL_REGISTRY.values(), key=lambda t: t.name)
+            ]
+            return render_stat_list(rows, empty="No tools registered.")
+
+        status = {"pass": "PASS", "warn": "WARN", "fail": "FAIL"}.get(stat_type)
+        if status is None:
+            raise Http404("Unknown stat type")
+        report = _build_mcp_report()
+        rows = [
+            stat_list_row(r["name"], meta=_detail_summary(r.get("detail")))
+            for r in report
+            if r["status"] == status
+        ]
+        empty = {"PASS": "No passing checks.", "WARN": "No warnings.", "FAIL": "No failures."}[status]
+        return render_stat_list(rows, empty=empty)
+
+
+def _detail_summary(detail) -> str:
+    """Condense a check's ``detail`` (str or dict) into a one-line meta string."""
+    if isinstance(detail, dict):
+        return ", ".join(f"{k}: {v}" for k, v in detail.items())
+    return "" if detail is None else str(detail)
 
 
 class MCPAdminToolsView(_AdminBase):
