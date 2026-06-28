@@ -65,6 +65,28 @@ class Command(BaseCommand):
             self._explain(options["explain"], as_json=options.get("json", False))
             return
 
+        # MCP turned off site-wide: the empty registry / missing routes are by
+        # design, not a misconfiguration. Report that plainly (PASS) instead of
+        # diagnosing the intentional state as broken.
+        if not getattr(settings, "SMALLSTACK_MCP_ENABLED", True):
+            report = [
+                {
+                    "name": "MCP enabled",
+                    "status": "PASS",
+                    "detail": (
+                        "MCP is disabled via SMALLSTACK_MCP_ENABLED. The /mcp endpoint, "
+                        "OAuth, tools, and registration are intentionally off — nothing to diagnose."
+                    ),
+                }
+            ]
+            if options.get("json"):
+                self.stdout.write(jsonlib.dumps(report, indent=2))
+            else:
+                self._print_human(report)
+                self.stdout.write("")
+                self.stdout.write(f"{GREEN}MCP disabled via SMALLSTACK_MCP_ENABLED — 0 issues.{RESET}")
+            return
+
         report: list[dict] = []
         self._check_mcp_package(report)
         self._check_settings(report)

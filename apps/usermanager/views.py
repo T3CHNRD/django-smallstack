@@ -2,23 +2,33 @@
 
 from typing import Any
 
+from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Count, Max
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.views.decorators.http import require_POST
 
 from apps.activity.models import RequestLog
 from apps.smallstack.crud import Action, CRUDView
 from apps.smallstack.mixins import StaffRequiredMixin
 from apps.smallstack.stat_lists import render_stat_list, stat_list_row
 
-from .forms import UserAccountForm, UserProfileForm
+from .forms import UserAccountForm, UserCreateForm, UserProfileForm
 
 User = get_user_model()
+
+
+def _active_superuser_count(exclude_pk=None) -> int:
+    qs = User.objects.filter(is_superuser=True, is_active=True)
+    if exclude_pk is not None:
+        qs = qs.exclude(pk=exclude_pk)
+    return qs.count()
 
 
 def _render_name(value, obj):
@@ -85,7 +95,12 @@ class UserCRUDView(CRUDView):
 
     @classmethod
     def _get_template_names(cls, suffix):
-        if suffix == "form":
+        # The CRUD engine asks for suffix "create"/"edit" (plus the legacy
+        # "form"); match all three so the custom tabbed user form keeps being
+        # used. v0.11.19 renamed the suffix, so this override stopped matching
+        # and the create/edit pages silently fell back to the generic CRUD
+        # form — losing the Profile + Activity tabs.
+        if suffix in ("form", "create", "edit"):
             return ["accounts/user_form.html"]
         if suffix == "list":
             return ["usermanager/user_list.html"]
@@ -94,11 +109,25 @@ class UserCRUDView(CRUDView):
     @classmethod
     def _make_view(cls, base_class):
         """Override to inject custom logic into update and detail views."""
-        from apps.smallstack.crud import _CRUDDeleteBase, _CRUDListBase, _CRUDUpdateBase
+        from apps.smallstack.crud import (
+            _CRUDCreateBase,
+            _CRUDDeleteBase,
+            _CRUDListBase,
+            _CRUDUpdateBase,
+        )
 
         view_class = super()._make_view(base_class)
 
-        if base_class is _CRUDListBase:
+        if base_class is _CRUDCreateBase:
+            # Create with a password set up front, so the new account is
+            # immediately usable (never passwordless). The Invite action is
+            # the email-based alternative.
+            def get_form_class(self):
+                return UserCreateForm
+
+            view_class.get_form_class = get_form_class
+
+        elif base_class is _CRUDListBase:
             # Add the dashboard stat cards to the list page. Search / filter /
             # sort / pagination are all handled by the base list view (the
             # toolbar's ?q= search reuses search_fields), so no get_queryset or
@@ -140,6 +169,13 @@ class UserCRUDView(CRUDView):
 
             def post(self, request, *args, **kwargs):
                 self.object = self.get_object()
+                # Capture the ORIGINAL flag values before form validation —
+                # form.is_valid() runs construct_instance(), which mutates
+                # self.object to the submitted values, so reading them after
+                # would compare new-vs-new and defeat the guardrails.
+                was_staff = self.object.is_staff
+                was_active = self.object.is_active
+                is_superuser = self.object.is_superuser
                 form = self.get_form()
                 profile = getattr(self.object, "profile", None)
                 profile_form = UserProfileForm(
@@ -153,6 +189,36 @@ class UserCRUDView(CRUDView):
                     from django.db import transaction
                     from django.http import HttpResponseRedirect
                     from django.urls import reverse
+
+                    # ── Guardrails (compare ORIGINAL vs submitted) ──────
+                    new_is_staff = form.cleaned_data.get("is_staff", False)
+                    new_is_active = form.cleaned_data.get("is_active", False)
+                    editing_self = self.object.pk == request.user.pk
+                    guard_error = None
+                    if editing_self and was_staff and not new_is_staff:
+                        guard_error = "You can't remove your own staff access."
+                    elif editing_self and was_active and not new_is_active:
+                        guard_error = "You can't deactivate your own account."
+                    elif (
+                        is_superuser
+                        and not request.user.is_superuser
+                        and (not new_is_active or not new_is_staff)
+                    ):
+                        guard_error = (
+                            "Only a superuser can deactivate or remove staff from a superuser account."
+                        )
+                    elif (
+                        is_superuser
+                        and was_active
+                        and not new_is_active
+                        and _active_superuser_count(exclude_pk=self.object.pk) == 0
+                    ):
+                        guard_error = "You can't deactivate the last active superuser."
+                    if guard_error:
+                        messages.error(request, guard_error)
+                        context = self.get_context_data(form=form)
+                        context["profile_form"] = profile_form
+                        return self.render_to_response(context)
 
                     with transaction.atomic():
                         # Save profile fields directly to avoid the
@@ -180,16 +246,28 @@ class UserCRUDView(CRUDView):
             view_class.post = post
 
         elif base_class is _CRUDDeleteBase:
-            # Prevent users from deleting themselves
-            def delete(self, request, *args, **kwargs):
+            # Guard self-delete and superuser/last-superuser deletion. NOTE:
+            # Django 5+/6 DeleteView routes POST through post()/form_valid(),
+            # NOT delete() — guarding delete() alone is a no-op (the reason the
+            # old self-delete guard silently stopped working). Guard in post().
+            def post(self, request, *args, **kwargs):
+                from django.http import HttpResponseForbidden
+
                 self.object = self.get_object()
-                if self.object.pk == request.user.pk:
-                    from django.http import HttpResponseForbidden
-
+                target = self.object
+                if target.pk == request.user.pk:
                     return HttpResponseForbidden("You cannot delete your own account.")
-                return super(view_class, self).delete(request, *args, **kwargs)
+                if target.is_superuser and not request.user.is_superuser:
+                    return HttpResponseForbidden("Only a superuser can delete a superuser account.")
+                if (
+                    target.is_superuser
+                    and target.is_active
+                    and _active_superuser_count(exclude_pk=target.pk) == 0
+                ):
+                    return HttpResponseForbidden("You can't delete the last active superuser.")
+                return super(view_class, self).post(request, *args, **kwargs)
 
-            view_class.delete = delete
+            view_class.post = post
 
         return view_class
 
@@ -314,3 +392,36 @@ def user_stat_detail(request, stat_type: str) -> HttpResponse:
         empty_msg = "No timezones configured."
 
     return render_stat_list(rows, empty=empty_msg)
+
+
+@require_POST
+@staff_member_required
+def send_user_link(request, pk: int) -> HttpResponse:
+    """Email the user a set-password link (resend invite if they never set one,
+    otherwise a standard branded password-reset link)."""
+    from apps.accounts.views import send_setup_or_reset
+
+    user = get_object_or_404(User, pk=pk)
+    kind = send_setup_or_reset(request, user)
+    if kind == "invite":
+        messages.success(request, f"Invite link sent to {user.email}.")
+    elif kind == "reset":
+        messages.success(request, f"Password reset link sent to {user.email}.")
+    else:
+        messages.error(request, "Couldn't send a link — this user has no email address on file.")
+    return redirect("manage/users-update", pk=pk)
+
+
+@require_POST
+@staff_member_required
+def unlock_user(request, pk: int) -> HttpResponse:
+    """Clear django-axes failed-login lockouts for a user."""
+    user = get_object_or_404(User, pk=pk)
+    try:
+        from axes.utils import reset
+
+        reset(username=user.get_username())
+        messages.success(request, f"Cleared login lockouts for {user.get_username()}.")
+    except Exception:
+        messages.error(request, "Couldn't clear lockouts for this account.")
+    return redirect("manage/users-update", pk=pk)

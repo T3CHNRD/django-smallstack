@@ -49,6 +49,15 @@ BRAND_SIGNUP_TERMS_NOTICE = config("BRAND_SIGNUP_TERMS_NOTICE", default=True, ca
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@example.com")
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 
+# Accent colour used in HTML emails (the branded header band + buttons).
+# Emails can't use the live CSS palette, so this is a single re-brandable knob.
+# Default is the Django-palette emerald, not the old Django-admin teal.
+BRAND_EMAIL_ACCENT = config("BRAND_EMAIL_ACCENT", default="#10b981")
+
+# How long password-reset / set-password / invite links stay valid (seconds).
+# Set explicitly so the "expires in 24 hours" email copy is actually true.
+PASSWORD_RESET_TIMEOUT = config("PASSWORD_RESET_TIMEOUT", default=86400, cast=int)
+
 # ---------------------------------------------------------------------------
 # Feature Flags & UI
 # ---------------------------------------------------------------------------
@@ -66,6 +75,11 @@ SMALLSTACK_COLOR_PALETTE = config("SMALLSTACK_COLOR_PALETTE", default="purple")
 SMALLSTACK_LOGIN_ENABLED = config("SMALLSTACK_LOGIN_ENABLED", default=True, cast=bool)
 # Set to False to hide Sign Up and 404 the signup URL
 SMALLSTACK_SIGNUP_ENABLED = config("SMALLSTACK_SIGNUP_ENABLED", default=True, cast=bool)
+# Passwordless ("email me a code") login. When True the login page offers a
+# code-based sign-in: enter email -> 6-digit code emailed -> enter code -> in.
+SMALLSTACK_PASSWORDLESS_LOGIN = config("SMALLSTACK_PASSWORDLESS_LOGIN", default=False, cast=bool)
+# Validity window for a passwordless sign-in code, in seconds (default 10 min).
+SMALLSTACK_LOGIN_CODE_TTL = config("SMALLSTACK_LOGIN_CODE_TTL", default=600, cast=int)
 
 # ---------------------------------------------------------------------------
 # Sidebar
@@ -120,6 +134,26 @@ BACKUP_DOWNLOAD_ENABLED = config("BACKUP_DOWNLOAD_ENABLED", default=True, cast=b
 # ---------------------------------------------------------------------------
 HEARTBEAT_RETENTION_DAYS = config("HEARTBEAT_RETENTION_DAYS", default=7, cast=int)
 HEARTBEAT_EXPECTED_INTERVAL = config("HEARTBEAT_EXPECTED_INTERVAL", default=60, cast=int)
+# A monitor younger than this shows a "warming up" pill instead of a not-yet-
+# representative uptime % on the status overview / public board.
+HEARTBEAT_WARMUP_MINUTES = config("HEARTBEAT_WARMUP_MINUTES", default=60, cast=int)
+
+# Master switch for the ANONYMOUS public status surface — the branded /status/
+# board, /status/json/, and the public scheduled-maintenance pages. Set False to
+# turn it off entirely (those routes return 404 and their links are hidden); the
+# staff status tooling under /smallstack/status/ (overview, dashboard, SLA,
+# per-monitor) is unaffected. Default on.
+SMALLSTACK_PUBLIC_STATUS_ENABLED = config("SMALLSTACK_PUBLIC_STATUS_ENABLED", default=True, cast=bool)
+
+# ---------------------------------------------------------------------------
+# REST API surface
+# ---------------------------------------------------------------------------
+# Master switch for the whole HTTP API: the OpenAPI schema, Swagger UI / ReDoc,
+# the API-auth + dashboard endpoints, and every per-CRUDView REST endpoint
+# (``enable_api = True`` becomes a no-op when this is off). Set False to ship with
+# no API published — the routes 404, the "API Health" nav + status monitor hide.
+# Default on.
+SMALLSTACK_API_ENABLED = config("SMALLSTACK_API_ENABLED", default=True, cast=bool)
 
 # ---------------------------------------------------------------------------
 # Login Rate Limiting (django-axes)
@@ -132,6 +166,12 @@ AXES_RESET_ON_SUCCESS = True  # Reset failure count after successful login
 # ---------------------------------------------------------------------------
 # MCP — Model Context Protocol server for AI clients
 # ---------------------------------------------------------------------------
+
+# Master switch for the whole MCP surface: the /mcp JSON-RPC endpoint, OAuth +
+# discovery routes, all tool registration (``enable_mcp = True`` becomes a no-op),
+# and the MCP nav + dashboard widget + status monitor. Set False to ship without
+# MCP — the endpoint 404s and nothing registers. Default on.
+SMALLSTACK_MCP_ENABLED = config("SMALLSTACK_MCP_ENABLED", default=True, cast=bool)
 
 # Server name advertised on `initialize` and the friendly GET banner.
 MCP_SERVER_NAME = config("MCP_SERVER_NAME", default=BRAND_NAME.lower().replace(" ", "-"))

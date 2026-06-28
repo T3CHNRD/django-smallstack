@@ -23,8 +23,9 @@
             Timezones
         </a>
         {% if create_view_url %}
-        <a href="{{ create_view_url }}" class="btn-primary">+ Add User</a>
+        <a href="{{ create_view_url }}" class="btn-tint">+ Add User</a>
         {% endif %}
+        <a href="{% url 'accounts:invite' %}" class="btn-primary">✉ Invite User</a>
     </div>
 </div>
 {% endblock %}

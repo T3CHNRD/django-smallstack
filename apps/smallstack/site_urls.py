@@ -30,12 +30,18 @@ urlpatterns = [
         "accounts/password_reset/",
         PasswordResetView.as_view(
             html_email_template_name="registration/password_reset_email_html.html",
-            extra_email_context={"site_name": getattr(settings, "SITE_NAME", "SmallStack")},
+            subject_template_name="registration/password_reset_subject.txt",
+            extra_email_context={
+                "site_name": getattr(settings, "SITE_NAME", "SmallStack"),
+                "brand_name": getattr(settings, "BRAND_NAME", "SmallStack"),
+                "brand_accent": getattr(settings, "BRAND_EMAIL_ACCENT", "#10b981"),
+            },
         ),
         name="password_reset",
     ),
     path("accounts/", include("django.contrib.auth.urls")),
     path("accounts/signup/", SignupView.as_view(), name="signup"),
+    path("accounts/", include("apps.accounts.urls")),
     # Help/Documentation
     path("help/", include("apps.help.urls")),
     # Activity tracking
