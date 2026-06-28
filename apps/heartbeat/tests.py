@@ -1837,3 +1837,36 @@ class TestExposedSurfaces:
         from apps.heartbeat.surfaces import Surface
 
         assert Surface(kind="mcp", target="search_all", label="x").value == "mcp:search_all"
+
+
+class TestDailyTimelineTodayColoring:
+    """Regression: a sparse, all-OK *current* day must not render red on the 90-day
+    timeline. Today is partial, so it's judged by its actual beats (failure-based),
+    not an elapsed-since-midnight denominator that paints a few-beats day red."""
+
+    def test_today_sparse_ok_classifies_up(self, db):
+        # epoch a few days ago so today isn't pre-epoch; NO daily summary for today,
+        # so the raw-beats path runs.
+        key = "sm_sparse_today"
+        HeartbeatEpoch.objects.create(monitor_key=key, started_at=now() - timedelta(days=3))
+        base = now().replace(second=0, microsecond=0)
+        for i in range(3):  # only 3 OK beats today — far fewer than a full day
+            Heartbeat.objects.create(monitor_key=key, timestamp=base - timedelta(minutes=i), status="ok")
+
+        slots = status_mod._build_daily_timeline(days=90, monitor_key=key)
+        today_slot = slots[-1]
+        assert today_slot["date"] == now().date()
+        assert today_slot["status"] == "up"  # was "down" under the elapsed-time denominator
+        assert today_slot["uptime"] == 100.0
+
+    def test_today_with_failures_still_degraded(self, db):
+        # A real outage today (mixed ok/fail) must still read as degraded/down, not up.
+        key = "sm_today_fail"
+        HeartbeatEpoch.objects.create(monitor_key=key, started_at=now() - timedelta(days=3))
+        base = now().replace(second=0, microsecond=0)
+        Heartbeat.objects.create(monitor_key=key, timestamp=base, status="ok")
+        for i in range(1, 4):
+            Heartbeat.objects.create(monitor_key=key, timestamp=base - timedelta(minutes=i), status="fail")
+
+        today_slot = status_mod._build_daily_timeline(days=90, monitor_key=key)[-1]
+        assert today_slot["status"] in ("degraded", "down")  # 1/4 ok → not "up"

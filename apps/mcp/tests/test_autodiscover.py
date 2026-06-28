@@ -62,7 +62,9 @@ def test_autodiscover_logs_but_doesnt_raise_on_module_error():
             raise RuntimeError("kaboom")
         return real_import(name, *args, **kwargs)
 
-    with patch("apps.mcp.apps.importlib.import_module", side_effect=explode):
+    # The import now happens inside the shared util (apps.smallstack.autodiscover),
+    # which _autodiscover_apps delegates to — patch there.
+    with patch("apps.smallstack.autodiscover.importlib.import_module", side_effect=explode):
         # Must not raise.
         imported = _config()._autodiscover_apps(("views",))
 

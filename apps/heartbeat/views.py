@@ -1069,7 +1069,9 @@ def _build_site_card(core_services: list[dict]) -> dict[str, Any]:
                 "ok": ok,
                 "state": "operational" if ok else "down",
                 "glyph": display["glyph"],
-                "state_label": "on" if ok else "off",
+                # "down" (not "off") when a core service isn't operational — there's no
+                # per-service toggle, so "off" misreads as "someone disabled this".
+                "state_label": "on" if ok else "down",
                 "summary": inv.get("summary", ""),
                 "items": inv.get("items", []),
                 "detail_url": rows[0]["detail_url"]

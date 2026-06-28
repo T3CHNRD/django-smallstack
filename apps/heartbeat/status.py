@@ -456,9 +456,6 @@ def _daily_uptime_map(monitor_key: str, start, end) -> dict:
     )
     raw_by_date = {r["day"]: r for r in raw_rows}
 
-    now_local = localtime(now())
-    midnight = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
-    elapsed_today = max((now_local - midnight).total_seconds(), 60)
     full_day_expected = max(int(86400 // interval), 1)
 
     result: dict = {}
@@ -471,7 +468,10 @@ def _daily_uptime_map(monitor_key: str, start, end) -> dict:
         else:
             raw = raw_by_date.get(day)
             if raw and raw["total"]:
-                expected = max(int(elapsed_today // interval), 1) if day == today else full_day_expected
+                # Today is partial: judge it by its actual recorded beats (failure-based,
+                # like the 24h timeline) so a sparse-but-all-OK day isn't painted red by an
+                # elapsed-time denominator. Completed days use the full-day SLA denominator.
+                expected = raw["total"] if day == today else full_day_expected
                 uptime = min(round(raw["ok"] / expected * 100, 2), 100.0)
         result[day] = uptime
         day += timedelta(days=1)

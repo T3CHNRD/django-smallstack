@@ -135,7 +135,7 @@ SMALLSTACK_MCP_ENABLED = config("SMALLSTACK_MCP_ENABLED", default=True, cast=boo
 |---|---|---|
 | `SMALLSTACK_PUBLIC_STATUS_ENABLED` | `/status/`, `/status/json/`, and the public scheduled-maintenance pages return **404**; the "Public page"/"JSON" links hide on the staff overview. | The staff status tooling under `/smallstack/status/` (overview, dashboard, SLA, per-monitor). |
 | `SMALLSTACK_API_ENABLED` | No `/api/*` routes (schema, Swagger, ReDoc, auth, dashboard); `enable_api = True` becomes a **no-op** (the API registry stays empty); the **API Health** nav + API status monitor disappear. | The `api_doctor` command and the `/smallstack/api/` admin pages (they just report an empty surface). |
-| `SMALLSTACK_MCP_ENABLED` | No `/mcp` endpoint, OAuth, or discovery routes; **no tools register** (`enable_mcp = True` and `@tool`/search tools are skipped); the **MCP** nav + dashboard widget + status monitor disappear. | The `/smallstack/mcp/` admin pages (they report zero tools). |
+| `SMALLSTACK_MCP_ENABLED` | No `/mcp` endpoint, OAuth, or discovery routes; **no tools register** (`enable_mcp = True` and `@tool`/search tools are skipped); the **MCP** nav + dashboard widget + status monitor disappear. | The `/smallstack/mcp/` admin pages (they report zero tools), **and Search** — CRUDView discovery runs in the core (`SmallStackConfig.ready()`), not the MCP app, so the toggles are genuinely independent. |
 
 These are **deploy-time** flags — read once at startup (the URL gating is import-time),
 so change them in `.env` and restart; they aren't per-request toggles.

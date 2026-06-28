@@ -15,6 +15,16 @@ class SmallStackConfig(AppConfig):
     help_slides_dir = "docs/slides"
 
     def ready(self):
+        # Import every app's views.py so CRUDView subclasses register into
+        # CRUDView._registry (Django auto-imports models/admin, never views). The
+        # framework core loads before every consumer, so doing this here — and
+        # unconditionally — keeps the registry populated regardless of feature
+        # toggles. (It used to ride on the MCP app's autodiscover, which coupled
+        # Search to SMALLSTACK_MCP_ENABLED.)
+        from apps.smallstack.autodiscover import autodiscover_app_modules
+
+        autodiscover_app_modules(("views",))
+
         from apps.smallstack import dashboard
         from apps.smallstack.dashboard_widgets import (
             BackupsDashboardWidget,

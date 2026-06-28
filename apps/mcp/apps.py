@@ -34,14 +34,11 @@ class MCPConfig(AppConfig):
             except Exception:
                 logger.exception("Failed to import MCP_TOOL_MODULES entry %s", path)
 
-        # Step 2: autodiscover. Django auto-imports models.py and (via the
-        # admin's own autodiscover) admin.py, but it does NOT auto-import
-        # views.py. CRUDView subclasses defined in views.py would therefore
-        # never trigger __init_subclass__ before we walk the registry below.
-        # Mirror the admin.autodiscover pattern and try-import every app's
-        # views.py + mcp_tools.py at startup. Failures are swallowed.
+        # Step 2: import every app's mcp_tools.py so @tool callbacks self-register.
+        # (views.py — which populates CRUDView._registry — is imported earlier by
+        # SmallStackConfig.ready(), so it's available whether or not MCP is on.)
         if getattr(settings, "MCP_AUTODISCOVER", True):
-            self._autodiscover_apps(("views", "mcp_tools"))
+            self._autodiscover_apps(("mcp_tools",))
 
         # Step 3: walk the CRUDView registry and emit factory tools for
         # anything opted in via enable_mcp = True.
@@ -103,28 +100,12 @@ class MCPConfig(AppConfig):
             logger.exception("Failed to register MCP status monitor")
 
     def _autodiscover_apps(self, module_names: tuple[str, ...]) -> list[str]:
-        """Import `<app>.<module>` for every installed app and module name.
+        """Import ``<app>.<module>`` for every installed app, skipping this app.
 
-        Returns the list of dotted paths that were successfully imported.
-        Missing modules (ImportError on the dotted path itself) are silently
-        skipped — most apps won't have a mcp_tools.py for instance. Errors
-        DURING import (syntax errors, runtime failures) are logged but never
-        re-raised; AppConfig.ready() crashing would take the whole process
-        down.
+        Thin wrapper around the shared
+        :func:`apps.smallstack.autodiscover.autodiscover_app_modules` (the generic
+        ``views`` discovery moved there); kept so callers/tests have a stable seam.
         """
-        from django.apps import apps as django_apps
+        from apps.smallstack.autodiscover import autodiscover_app_modules
 
-        imported: list[str] = []
-        for app_config in django_apps.get_app_configs():
-            if app_config.label == self.label:
-                continue
-            for mod in module_names:
-                dotted = f"{app_config.name}.{mod}"
-                try:
-                    importlib.import_module(dotted)
-                    imported.append(dotted)
-                except ImportError:
-                    pass
-                except Exception:
-                    logger.warning("MCP autodiscover failed to import %s", dotted, exc_info=True)
-        return imported
+        return autodiscover_app_modules(module_names, skip_label=self.label)

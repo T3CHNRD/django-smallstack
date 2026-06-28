@@ -63,6 +63,29 @@ class Command(BaseCommand):
             self._explain(options["explain"], as_json=options.get("json", False))
             return
 
+        # API turned off site-wide: the empty registry / missing routes are by design,
+        # not a misconfiguration. Report that plainly (PASS) rather than diagnosing the
+        # intentional state as broken.
+        if not getattr(settings, "SMALLSTACK_API_ENABLED", True):
+            report = [
+                {
+                    "name": "API enabled",
+                    "status": "PASS",
+                    "detail": (
+                        "The REST API is disabled via SMALLSTACK_API_ENABLED. The /api/* routes, "
+                        "OpenAPI schema, Swagger/ReDoc, and per-CRUDView endpoints are intentionally "
+                        "off — nothing to diagnose."
+                    ),
+                }
+            ]
+            if options.get("json"):
+                self.stdout.write(jsonlib.dumps(report, indent=2, default=str))
+            else:
+                self._print_human(report)
+                self.stdout.write("")
+                self.stdout.write("Summary: 1 ✓ / 0 ⚠ / 0 ✗ (API disabled via SMALLSTACK_API_ENABLED)")
+            return
+
         report: list[dict] = []
         self._check_openapi_package(report)
         self._check_dependencies(report)
