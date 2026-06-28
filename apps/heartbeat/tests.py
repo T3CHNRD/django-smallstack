@@ -586,9 +586,6 @@ class TestStatusMonitorViews:
         assert "hour-spark" in body
         assert "stat-spark" in body  # the per-row sparkline column
 
-    def test_dev_links_renders(self, staff_client, db):
-        assert staff_client.get(reverse("heartbeat:dev_links")).status_code == 200
-
     def test_endpoint_crud_list_renders(self, staff_client, db):
         assert staff_client.get(reverse("heartbeat:status/endpoints-list")).status_code == 200
 
@@ -1126,17 +1123,6 @@ class TestEndpointFormAndJson:
         assert "uptime_overall" in data and "sla_target" in data  # site top-level retained
         site = next(m for m in data["monitors"] if m["key"] == "site")
         assert {"key", "service", "title", "status", "uptime_24h", "uptime_7d", "uptime_overall"} <= set(site)
-
-    def test_dev_links_nav_registered_under_debug(self, staff_user):
-        # Test settings run with DEBUG=True, so the dev hub registers.
-        from django.test import RequestFactory
-
-        from apps.smallstack.navigation import nav
-
-        request = RequestFactory().get("/smallstack/status/overview/")
-        request.user = staff_user
-        labels = [i["label"] for g in nav.get_nav_items(request) for i in g["items"]]
-        assert "Status Links (dev)" in labels
 
 
 # ─── Polish + CRUDView-alignment pass (banners, breadcrumbs, API/MCP, per-monitor SLA) ───

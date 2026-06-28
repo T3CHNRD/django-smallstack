@@ -839,44 +839,6 @@ def _monitor_overview_state(monitor: Monitor) -> dict[str, Any]:
     }
 
 
-class StatusDevLinksView(StaffRequiredMixin, TemplateView):
-    """TEMPORARY dev index of every status page + per-monitor detail link.
-
-    A convenience hub while the monitoring system is built out. Remove before
-    release (the nav entry + URL + this view + its template).
-    """
-
-    template_name = "heartbeat/dev_links.html"
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        from django.urls import reverse
-
-        from apps.smallstack import monitors, visualizations
-
-        ctx = super().get_context_data(**kwargs)
-        ctx["pages"] = [
-            {"label": "Status overview", "url": reverse("heartbeat:status_overview"), "note": "New consolidated hub"},
-            {"label": "Timeline dashboard (legacy)", "url": reverse("heartbeat:dashboard"), "note": "Original page"},
-            {"label": "SLA", "url": reverse("heartbeat:sla"), "note": "SLA targets + maintenance windows"},
-            {"label": "Public status", "url": reverse("public_status"), "note": "Public /status/ page"},
-            {"label": "Status JSON", "url": reverse("heartbeat:status_json"), "note": "Machine-readable status"},
-        ]
-        monitor_pages: list[dict[str, Any]] = []
-        for monitor in monitors.get_monitors():
-            svc = monitors.get_service(monitor.service)
-            monitor_pages.append(
-                {
-                    "title": monitor.title,
-                    "service": svc.title if svc else monitor.service,
-                    "url": reverse("heartbeat:monitor_detail", kwargs={"monitor_key": monitor.key}),
-                    "public": monitor.public,
-                }
-            )
-        ctx["monitor_pages"] = monitor_pages
-        ctx["viz_keys"] = [v.key for v in visualizations.get_visualizations()]
-        return ctx
-
-
 class MonitorDetailView(TemplateView):
     """A single monitor's page — composed from the pluggable visualization registry.
 

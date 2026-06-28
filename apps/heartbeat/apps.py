@@ -11,8 +11,6 @@ class HeartbeatConfig(AppConfig):
     verbose_name = "Heartbeat Monitoring"
 
     def ready(self) -> None:
-        from django.conf import settings
-
         from apps.smallstack.navigation import nav
 
         nav.register(
@@ -26,18 +24,6 @@ class HeartbeatConfig(AppConfig):
             # per-monitor detail, dashboard, sla), not just the overview URL itself.
             active_prefix="/smallstack/status/",
         )
-
-        # TEMPORARY dev hub indexing every status page. Shown under DEBUG (or when
-        # SMALLSTACK_STATUS_DEV_LINKS is forced on); auto-hidden in production.
-        if settings.DEBUG or getattr(settings, "SMALLSTACK_STATUS_DEV_LINKS", False):
-            nav.register(
-                section="admin",
-                label="Status Links (dev)",
-                url_name="heartbeat:dev_links",
-                icon_svg='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h18v2H3v-2z"/></svg>',  # noqa: E501
-                staff_required=True,
-                order=21,
-            )
 
         # Register the built-in "site" service + database-connectivity monitor
         # with the pluggable status framework. Best-effort, like dashboard/nav.

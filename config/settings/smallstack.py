@@ -145,10 +145,6 @@ HEARTBEAT_WARMUP_MINUTES = config("HEARTBEAT_WARMUP_MINUTES", default=60, cast=i
 # per-monitor) is unaffected. Default on.
 SMALLSTACK_PUBLIC_STATUS_ENABLED = config("SMALLSTACK_PUBLIC_STATUS_ENABLED", default=True, cast=bool)
 
-# Temporary "Status Links (dev)" hub. Shown automatically under DEBUG; set this
-# True to force it on in a non-DEBUG environment (auto-hidden in production).
-SMALLSTACK_STATUS_DEV_LINKS = config("SMALLSTACK_STATUS_DEV_LINKS", default=False, cast=bool)
-
 # ---------------------------------------------------------------------------
 # REST API surface
 # ---------------------------------------------------------------------------
