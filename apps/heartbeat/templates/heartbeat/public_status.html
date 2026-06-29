@@ -43,6 +43,8 @@
         .status-overall.down .dot { background: var(--error-fg); }
         .status-overall.unknown { color: var(--body-quiet-color); border-color: var(--card-border); background: var(--card-bg); }
         .status-overall.unknown .dot { background: var(--body-quiet-color); }
+        .status-overall.maintenance { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 38%, transparent); background: color-mix(in srgb, var(--primary) 10%, var(--body-bg)); }
+        .status-overall.maintenance .dot { background: var(--primary); }
 
         .status-section-label { text-align: right; color: var(--body-quiet-color); font-size: 0.85rem; margin-bottom: 12px; }
 
@@ -57,6 +59,7 @@
         .status-monitor-state.degraded { color: var(--warning-fg); }
         .status-monitor-state.down { color: var(--error-fg); }
         .status-monitor-state.unknown { color: var(--body-quiet-color); }
+        .status-monitor-state.maintenance { color: var(--primary); }
 
         .status-timeline { display: flex; align-items: stretch; gap: 2px; height: 34px; }
         .day-bar { flex: 1 1 0; min-width: 0; border-radius: 2px; position: relative; background: var(--day-nodata); transition: transform var(--transition-fast); }
@@ -148,6 +151,7 @@
             {% if overall_state == 'operational' %}All systems operational
             {% elif overall_state == 'down' %}{{ overall_down_count }} system{{ overall_down_count|pluralize }} down{% if overall_degraded_count %} &middot; {{ overall_degraded_count }} degraded{% endif %}
             {% elif overall_state == 'degraded' %}{{ overall_degraded_count }} system{{ overall_degraded_count|pluralize }} degraded
+            {% elif overall_state == 'maintenance' %}{{ overall_maintenance_count }} system{{ overall_maintenance_count|pluralize }} under maintenance
             {% else %}Status unavailable{% endif %}
         </div>
 

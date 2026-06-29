@@ -34,6 +34,7 @@ monitors with a live status dot. Dots use palette state variables (never hex).
     .svc-dot.degraded { background: var(--warning-fg); }
     .svc-dot.down { background: var(--error-fg); }
     .svc-dot.unknown { background: var(--body-quiet-color); }
+    .svc-dot.maintenance { background: var(--primary); }
     /* Draw the eye to problems: tint + weight the monitor name when not OK. */
     .svc-monitor-name.state-down { color: var(--error-fg); font-weight: 600; }
     .svc-monitor-name.state-degraded { color: var(--warning-fg); }

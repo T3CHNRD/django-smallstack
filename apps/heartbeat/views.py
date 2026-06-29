@@ -198,6 +198,8 @@ class StatusPageView(PublicStatusGateMixin, TemplateView):
             overall = "down"
         elif "degraded" in states:
             overall = "degraded"
+        elif "maintenance" in states:
+            overall = "maintenance"
         elif "operational" in states:
             overall = "operational"
         else:
@@ -240,6 +242,8 @@ class StatusPageView(PublicStatusGateMixin, TemplateView):
             overall_down_count=(1 if site_state == "down" else 0) + sum(1 for r in rows if r["state"] == "down"),
             overall_degraded_count=(1 if site_state == "degraded" else 0)
             + sum(1 for r in rows if r["state"] == "degraded"),
+            overall_maintenance_count=(1 if site_state == "maintenance" else 0)
+            + sum(1 for r in rows if r["state"] == "maintenance"),
             calendar_months=calendar_months,
             cal_monitor_label=brand_name,
             cal_range_label=(
@@ -777,10 +781,23 @@ _STATE_DISPLAY: dict[str, dict[str, str]] = {
     # An orphaned Site Monitor — its surface was deregistered. Neutral, not alarming:
     # a config change to clean up, never an outage (so it must not roll a tier red).
     "orphaned": {"label": "Not exposed", "variant": "neutral", "glyph": "–"},
+    # Active maintenance window — planned work, shown in the accent color so it reads
+    # as "heads up", distinct from amber-degraded and red-down. Masks a real outage
+    # during the window (a service down on purpose isn't an incident).
+    "maintenance": {"label": "Under maintenance", "variant": "info", "glyph": "⚙"},
 }
 # Severity ordering so a service rolls up to the worst state of its monitors.
 # "orphaned" sits at the bottom with operational — it never escalates a tier.
-_STATE_SEVERITY: dict[str, int] = {"orphaned": 0, "operational": 0, "unknown": 1, "degraded": 2, "down": 3}
+# "maintenance" sits just above operational: it surfaces a window without masquerading
+# as degraded/down (a real, non-maintenance problem still wins).
+_STATE_SEVERITY: dict[str, int] = {
+    "orphaned": 0,
+    "operational": 0,
+    "maintenance": 1,
+    "unknown": 1,
+    "degraded": 2,
+    "down": 3,
+}
 
 
 def _runner_health() -> dict[str, Any]:
@@ -1135,6 +1152,8 @@ def _status_overview_context(public_only: bool = False) -> dict[str, Any]:
         overall_state = "down"
     elif "degraded" in states:
         overall_state = "degraded"
+    elif "maintenance" in states:
+        overall_state = "maintenance"
     elif "operational" in states:
         overall_state = "operational"
     else:
@@ -1157,6 +1176,8 @@ def _status_overview_context(public_only: bool = False) -> dict[str, Any]:
             cat_state = "down"
         elif "degraded" in cat_states:
             cat_state = "degraded"
+        elif "maintenance" in cat_states:
+            cat_state = "maintenance"
         elif "operational" in cat_states:
             cat_state = "operational"
         else:
@@ -1256,6 +1277,7 @@ def _status_overview_context(public_only: bool = False) -> dict[str, Any]:
         "overall_state": overall_state,
         "overall_down_count": sum(1 for r in all_rows if r["state"] == "down"),
         "overall_degraded_count": sum(1 for r in all_rows if r["state"] == "degraded"),
+        "overall_maintenance_count": sum(1 for r in all_rows if r["state"] == "maintenance"),
         **{f"overall_{k}": v for k, v in _STATE_DISPLAY.get(overall_state, _STATE_DISPLAY["unknown"]).items()},
     }
 

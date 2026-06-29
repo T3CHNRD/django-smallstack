@@ -168,7 +168,8 @@ Point `Service.detail_url_name` at the existing deep page (e.g.
 (`StatusPageView` → `heartbeat/public_status.html`). For the brand (`BRAND_NAME`)
 and every `public=True` monitor it shows:
 
-- an **overall health pill** ("All systems operational" / "N down");
+- an **overall health pill** ("All systems operational" / "N down" / "N degraded" /
+  "N under maintenance");
 - a **rolling 6-month maintenance calendar** (day squares; maintenance days striped;
   today ringed; hover for the window), navigable via `?cal=YYYY-MM`;
 - **stacked 1-day / 7-day / 90-day uptime bar timelines** for the site monitor
@@ -176,6 +177,14 @@ and every `public=True` monitor it shows:
   per other public monitor;
 - a **Scheduled maintenance** link → next-90-days list (`/status/maintenance/`, a
   vertical timeline) + a 6-month calendar (`/status/maintenance/calendar/`).
+
+**Maintenance masks the live status.** While a `MaintenanceWindow` is active for a
+monitor, `_get_status_data` returns `"maintenance"` (accent-coloured "Under
+maintenance") instead of `down`/`degraded` — a service that's intentionally down
+during its window isn't an incident. It's a single chokepoint, so the per-monitor
+rows, the overview, and `/status/json/` all agree. The overall roll-up precedence is
+**down > degraded > maintenance > operational** — a *real* outage on a monitor that
+*isn't* in a window still wins (it never gets masked).
 
 `public` is **per monitor** and *enforced* — not just a label. The built-in `site`
 monitor is `public=True`; api/mcp/search default `public=False`; default new

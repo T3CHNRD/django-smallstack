@@ -126,8 +126,13 @@ def _get_status_data(monitor_key: str = "site") -> dict[str, Any]:
     last = recent[0]
     age_seconds = (now() - last.timestamp).total_seconds()
 
-    # Determine status
-    if last.status == "fail" or age_seconds > expected_interval * 5:
+    # Determine status. An active maintenance window masks the live state: planned
+    # work reads as "Under maintenance", not an outage — so a service that's
+    # intentionally down during its window never shows "down" on the board.
+    if MaintenanceWindow.is_in_maintenance(now(), monitor_key):
+        status = "maintenance"
+        status_label = "Under maintenance"
+    elif last.status == "fail" or age_seconds > expected_interval * 5:
         status = "down"
         status_label = "Down"
     elif any(h.status == "fail" for h in recent):

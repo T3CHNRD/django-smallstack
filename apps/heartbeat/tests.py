@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.utils.timezone import activate, deactivate, now
+from django.utils.timezone import activate, deactivate, localdate, now
 
 from . import status as status_mod
 from .forms import SLAForm
@@ -765,7 +765,7 @@ class TestDailyTimeline:
     def test_classifies_days_against_sla(self, db):
         from apps.heartbeat.models import HeartbeatDaily
 
-        today = now().date()
+        today = localdate()
         HeartbeatDaily.objects.create(
             monitor_key="site", date=today, ok_count=1440, expected_count=1440, uptime_pct=100
         )
@@ -793,7 +793,7 @@ class TestCalendarView:
 
         from apps.heartbeat.models import MaintenanceWindow
 
-        today = now().date()
+        today = localdate()
         start = make_aware(datetime(today.year, today.month, today.day, 1, 0))
         MaintenanceWindow.objects.create(
             monitor_key="site", title="DB upgrade", start=start, end=start + timedelta(hours=2)
@@ -878,7 +878,7 @@ class TestMaintenanceCalendar:
 
         from apps.heartbeat.models import MaintenanceWindow
 
-        today = now().date()
+        today = localdate()
         s = make_aware(datetime(today.year, today.month, today.day, 1, 0))
         MaintenanceWindow.objects.create(monitor_key="site", title="Patch", start=s, end=s + timedelta(hours=1))
 
@@ -1586,7 +1586,10 @@ class TestAddMonitorModal:
         resp = staff_client.get(reverse(name), HTTP_X_REQUESTED_WITH="XMLHttpRequest")
         body = resp.content.decode()
         assert "<html" not in body.lower()  # no full-page chrome
-        assert "View Site" not in body  # no sidebar nav
+        # Assert on the structural sidebar selector, not a link label — downstreams
+        # rebrand the nav copy (e.g. smallstack_web's marketing sidebar), but the
+        # `id="sidebar"` wrapper is stable across every SmallStack sidebar.
+        assert 'id="sidebar"' not in body  # no sidebar nav
         assert "<form" in body
         assert "page-header-bleed" not in body  # the breadcrumb header is suppressed
 
@@ -1596,7 +1599,7 @@ class TestAddMonitorModal:
     def test_plain_get_returns_full_page(self, staff_client, db, name):
         body = staff_client.get(reverse(name)).content.decode()
         assert "<html" in body.lower()
-        assert "View Site" in body  # sidebar present
+        assert 'id="sidebar"' in body  # sidebar present (downstreams may rebrand the links)
 
     def test_form_action_is_create_url_for_modal_post(self, staff_client, db):
         url = reverse("heartbeat:status/endpoints-create")
@@ -1841,7 +1844,7 @@ class TestDailyTimelineTodayColoring:
 
         slots = status_mod._build_daily_timeline(days=90, monitor_key=key)
         today_slot = slots[-1]
-        assert today_slot["date"] == now().date()
+        assert today_slot["date"] == localdate()
         assert today_slot["status"] == "up"  # was "down" under the elapsed-time denominator
         assert today_slot["uptime"] == 100.0
 
@@ -1856,3 +1859,69 @@ class TestDailyTimelineTodayColoring:
 
         today_slot = status_mod._build_daily_timeline(days=90, monitor_key=key)[-1]
         assert today_slot["status"] in ("degraded", "down")  # 1/4 ok → not "up"
+
+
+class TestMaintenancePill:
+    """An active maintenance window masks the live status as 'Under maintenance'
+    (accent), not a red outage — on _get_status_data, the public pill, and the JSON."""
+
+    def _site_fail_now(self):
+        # A failing 'site' beat at the current minute (site is public by default).
+        Heartbeat.objects.create(
+            monitor_key="site", timestamp=now().replace(second=0, microsecond=0), status="fail"
+        )
+
+    def _window(self, monitor_key="site"):
+        from apps.heartbeat.models import MaintenanceWindow
+
+        MaintenanceWindow.objects.create(
+            monitor_key=monitor_key,
+            title="Deploy",
+            start=now() - timedelta(minutes=10),
+            end=now() + timedelta(minutes=10),
+        )
+
+    def test_get_status_data_masks_down_as_maintenance(self, db):
+        self._site_fail_now()
+        assert status_mod._get_status_data("site")["status"] == "down"  # no window yet
+        self._window("site")
+        data = status_mod._get_status_data("site")
+        assert data["status"] == "maintenance"
+        assert data["status_label"] == "Under maintenance"
+
+    def test_public_pill_shows_under_maintenance(self, client, db):
+        self._site_fail_now()
+        self._window("site")
+        body = client.get(reverse("public_status")).content.decode()
+        assert "under maintenance" in body.lower()
+        assert "status-overall maintenance" in body  # the accent pill, not down
+
+    def test_json_reports_maintenance(self, client, db):
+        self._site_fail_now()
+        self._window("site")
+        data = client.get(reverse("public_status_json")).json()
+        site = next(m for m in data["monitors"] if m["key"] == "site")
+        assert site["status"] == "maintenance"
+
+    def test_real_down_outranks_maintenance(self, db, monkeypatch):
+        # A genuine outage on a monitor NOT in a window still wins the overall roll-up.
+        from apps.smallstack import monitors as M
+        from apps.smallstack.monitors import CheckResult, Monitor
+
+        class _Down(Monitor):
+            key = "pubdown"
+            service = "site"
+            title = "Real outage"
+            public = True
+
+            def check(self):
+                return CheckResult.down("boom")
+
+        monkeypatch.setattr(M, "_monitor_sources", M._monitor_sources + [lambda: [_Down()]])
+        Heartbeat.objects.create(monitor_key="pubdown", timestamp=now().replace(second=0, microsecond=0), status="fail")
+        self._site_fail_now()
+        self._window("site")  # site is masked to maintenance...
+        from apps.heartbeat.views import _status_overview_context
+
+        ctx = _status_overview_context(public_only=True)
+        assert ctx["overall_state"] == "down"  # ...but the real outage on pubdown wins
