@@ -1,0 +1,75 @@
+.operations-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.operations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.operations-muted {
+    color: var(--body-quiet-color);
+    margin-top: 0;
+}
+
+.operations-list {
+    margin: 0;
+    padding-left: 1rem;
+}
+
+.operations-list li {
+    margin-bottom: 0.4rem;
+}
+
+.operations-list a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.operations-list a:hover {
+    color: var(--primary);
+}
+
+.operations-sortable {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.operations-sort-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm, 6px);
+    padding: 0.7rem 0.85rem;
+}
+
+.operations-sort-item small {
+    color: var(--body-quiet-color);
+}
+
+.operations-sort-item-host {
+    border-style: dashed;
+}
+
+.drag-handle {
+    color: var(--primary);
+    cursor: grab;
+    user-select: none;
+}
+
+.operations-sort-ghost {
+    opacity: 0.7;
+}
+
+.operations-sort-chosen {
+    border-color: var(--primary);
+}

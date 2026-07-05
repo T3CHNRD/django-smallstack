@@ -1,0 +1,62 @@
+{% extends "smallstack/base.html" %}
+{% load theme_tags static %}
+
+{% block title %}Operations {{ current_page.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'operations/css/portal.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+{% breadcrumb "Operations" "operations:dashboard" %}
+{% if current_page.slug != "dashboard" %}
+{% breadcrumb current_page.title %}
+{% endif %}
+{% render_breadcrumbs %}
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header-bleed page-header-with-actions" style="display: flex; align-items: center; justify-content: space-between;">
+    <div class="page-header-content">
+        <h1>{{ current_page.title }}</h1>
+        <p class="page-subtitle">{{ current_page.summary }}</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% include "operations/_portal_nav.html" %}
+
+<section class="card" style="margin-bottom: 16px;">
+    <div class="card-header">
+        <h2>{{ current_page.eyebrow }}</h2>
+    </div>
+    <div class="card-body">
+        <p class="operations-muted">Milestone 1 placeholder only. Domain behavior for this section has not been implemented.</p>
+    </div>
+</section>
+
+{% if show_sortable_demo %}
+<section class="card">
+    <div class="card-header">
+        <h2>Shutdown Order (Sortable.js Placeholder)</h2>
+    </div>
+    <div class="card-body">
+        <p class="operations-muted">Drag targets to reorder. This demo is UI-only and does not persist.</p>
+        <ul id="shutdown-order" class="operations-sortable" aria-label="Shutdown target order">
+            <li class="operations-sort-item"><span class="drag-handle" aria-hidden="true">::</span><span>Storage Array</span><small>Priority 1</small></li>
+            <li class="operations-sort-item"><span class="drag-handle" aria-hidden="true">::</span><span>Application VM</span><small>Priority 2</small></li>
+            <li class="operations-sort-item"><span class="drag-handle" aria-hidden="true">::</span><span>Router</span><small>Priority 3</small></li>
+            <li class="operations-sort-item operations-sort-item-host"><span class="drag-handle" aria-hidden="true">::</span><span>Host Machine</span><small>Pinned last in real workflow</small></li>
+        </ul>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if show_sortable_demo %}
+<script src="{% static 'operations/js/sortable.min.js' %}"></script>
+<script src="{% static 'operations/js/portal.js' %}"></script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "smallstack/base.html" %}
+{% load theme_tags static %}
+
+{% block title %}Operations Blackout Buddy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'operations/css/portal.css' %}">
+<link rel="stylesheet" href="{% static 'operations/css/blackoutbuddy.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+{% breadcrumb "Operations" "operations:dashboard" %}
+{% breadcrumb "Blackout Buddy" %}
+{% render_breadcrumbs %}
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header-bleed page-header-with-actions" style="display: flex; align-items: center; justify-content: space-between;">
+    <div class="page-header-content">
+        <h1>{{ current_page.title }}</h1>
+        <p class="page-subtitle">{{ current_page.summary }}</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% include "operations/_portal_nav.html" %}
+
+<section class="card">
+    <div class="card-body">
+        <div class="bb-instructions">
+            <p>Welcome to BlackoutBuddy! This calculator helps you plan your portable power needs.</p>
+            <ol>
+                <li>Select your appliances from the list below.</li>
+                <li>Enter how many hours per day you plan to run each item.</li>
+                <li>The calculator will show your total power needs and recommend solutions.</li>
+                <li>All pre-filled numbers are average estimates. Please adjust these numbers to match your specific product wattage.</li>
+                <li>If you select OTHER - insert your own values, you must manually enter wattage.</li>
+                <li>For multiple days, convert to total hours (example: 2 days = 48 hours, 3 days = 72 hours).</li>
+                <li>Do not forget you can save 5% by using the code solarscout at checkout on EcoFlow.com.</li>
+            </ol>
+        </div>
+
+        <div class="bb-grid">
+            <div class="bb-row bb-header">
+                <div>Appliance</div>
+                <div>Running Watts</div>
+                <div>Starting Watts (Surge)</div>
+                <div>Hours/Day</div>
+                <div>Daily kWh</div>
+            </div>
+            <div id="applianceRows"></div>
+        </div>
+
+        <div id="results" class="bb-results">
+            <div><strong id="totalWatts">Total Running Watts: 0 W</strong></div>
+            <div><strong id="totalStarting">Total Starting Watts: 0 W</strong></div>
+            <div><strong id="totalKwh">Total Daily Usage: 0.00 kWh</strong></div>
+        </div>
+
+        <div id="recommendation" class="recommendation-section"></div>
+
+        <div class="bb-actions">
+            <button id="resetButton" class="button">RESET CALCULATOR</button>
+            <button id="printButton" class="button">PRINT RESULTS</button>
+            <a class="button" href="https://us.ecoflow.com/?sca_ref=7408943.R33f7CbNF7&utm_source=uppromote&utm_medium=community&utm_campaign=koc" target="_blank" rel="noopener">Save 5% at EcoFlow.com</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'operations/js/blackoutbuddy.js' %}" defer></script>
+{% endblock %}

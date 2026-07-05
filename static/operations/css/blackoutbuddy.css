@@ -1,0 +1,91 @@
+.bb-instructions {
+    margin-bottom: 1.2rem;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--card-bg) 88%, var(--primary) 12%);
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius-sm, 6px);
+}
+
+.bb-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.bb-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.bb-row.bb-header {
+    font-weight: 700;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 0.4rem;
+}
+
+.bb-row input,
+.bb-row select {
+    width: 100%;
+    min-height: 2.1rem;
+}
+
+.daily-kwh {
+    font-weight: 600;
+    color: var(--body-quiet-color);
+}
+
+.bb-results {
+    margin-top: 1rem;
+    padding: 0.9rem;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm, 6px);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background: color-mix(in srgb, var(--card-bg) 70%, var(--primary) 30%);
+}
+
+.bb-results div {
+    min-width: 220px;
+}
+
+.recommendation-section {
+    margin-top: 0.7rem;
+}
+
+.recommendation-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recommendation-section li {
+    margin-bottom: 0.45rem;
+}
+
+.shop-link {
+    font-weight: 700;
+}
+
+.bb-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+    .bb-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--card-border);
+        padding-bottom: 0.7rem;
+    }
+
+    .bb-row.bb-header {
+        display: none;
+    }
+}

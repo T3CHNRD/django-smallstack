@@ -1,0 +1,88 @@
+{% extends "smallstack/base.html" %}
+{% load theme_tags static %}
+
+{% block title %}Operations Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'operations/css/portal.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+{% breadcrumb "Operations" "operations:dashboard" %}
+{% render_breadcrumbs %}
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header-bleed page-header-with-actions" style="display: flex; align-items: center; justify-content: space-between;">
+    <div class="page-header-content">
+        <h1>{{ current_page.title }}</h1>
+        <p class="page-subtitle">{{ current_page.summary }}</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% include "operations/_portal_nav.html" %}
+
+<div class="stat-cards" style="margin-bottom: 18px;">
+    {% stat_card value="9" label="Portal Pages" state="success" %}
+    {% stat_card value="10" label="Theme Modes" state="muted" %}
+    {% stat_card value="1" label="Milestone" unit="M1" state="warning" %}
+    {% stat_card value="0" label="Domain Logic Included" state="danger" %}
+</div>
+
+<div class="operations-grid">
+    <section class="card">
+        <div class="card-header">
+            <h2>Design System Status</h2>
+        </div>
+        <div class="card-body">
+            <p class="operations-muted">This shell intentionally includes only UI framework placeholders and routing.</p>
+            <table class="table-plain" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 10px 14px;">Section</th>
+                        <th style="text-align: left; padding: 10px 14px;">Status</th>
+                        <th style="text-align: left; padding: 10px 14px;">Scope Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 10px 14px;">Portal Shell</td>
+                        <td style="padding: 10px 14px; color: var(--success-fg);">Ready</td>
+                        <td style="padding: 10px 14px;">Navigation, cards, table, and page header patterns are in place.</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 14px;">Shutdown Reordering</td>
+                        <td style="padding: 10px 14px; color: var(--warning-fg);">Placeholder</td>
+                        <td style="padding: 10px 14px;">Touch-friendly drag ordering is available on the Shutdown Targets page only.</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 14px;">Integrations</td>
+                        <td style="padding: 10px 14px; color: var(--error-fg);">Deferred</td>
+                        <td style="padding: 10px 14px;">EcoFlow, MQTT, cloud auth, USB HID, and orchestration logic remain out of scope.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header">
+            <h2>Next Placeholder Routes</h2>
+        </div>
+        <div class="card-body">
+            <ul class="operations-list">
+                <li><a href="{% url 'operations:power-stations-list' %}">Power Stations</a></li>
+                <li><a href="{% url 'operations:shutdown-targets-list' %}">Shutdown Targets</a></li>
+                <li><a href="{% url 'operations:events' %}">Events</a></li>
+                <li><a href="{% url 'operations:reports' %}">Reports</a></li>
+                <li><a href="{% url 'operations:notifications' %}">Notifications</a></li>
+                <li><a href="{% url 'operations:nut' %}">NUT</a></li>
+                <li><a href="{% url 'operations:blackout_buddy' %}">Blackout Buddy</a></li>
+                <li><a href="{% url 'operations:settings' %}">Settings</a></li>
+            </ul>
+        </div>
+    </section>
+</div>
+{% endblock %}

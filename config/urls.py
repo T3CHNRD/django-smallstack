@@ -38,7 +38,9 @@ from apps.smallstack.dashboard import api_widgets as api_dashboard_widgets
 from .views import health_check, legal_page_view
 
 urlpatterns = [
-    # Project pages - customize these in apps/website/
+    # Operations portal mounted at root for EcoRsvGrd Milestone 1 shell
+    path("", include("apps.operations.urls")),
+    # Project pages remain available for non-overlapping website routes
     path("", include("apps.website.urls")),
     # All built-in SmallStack URLs (auth, profile, help, activity, heartbeat, backups, usermanager)
     path("smallstack/", include("apps.smallstack.site_urls")),

@@ -1,0 +1,11 @@
+{% load theme_tags %}
+<div class="operations-nav-wrap card" style="margin-bottom: 16px;">
+    <div class="card-body" style="padding: 12px;">
+        <nav class="operations-nav" aria-label="Operations sections">
+            {% for page in portal_pages %}
+            <a href="{% url page.route_name %}" class="tab-btn {% nav_active page.route_name %}">{{ page.title }}</a>
+            {% endfor %}
+            <a href="/smallstack/" class="tab-btn">SmallStack Admin</a>
+        </nav>
+    </div>
+</div>

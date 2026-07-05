@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.activity",
     "apps.heartbeat",
     "apps.usermanager",
+    "apps.operations",
     "apps.website",  # Project-specific pages (customize freely)
     "apps.mcp",  # Model Context Protocol server for AI clients
     "apps.tokenmgr",  # User-facing UI for API token management
