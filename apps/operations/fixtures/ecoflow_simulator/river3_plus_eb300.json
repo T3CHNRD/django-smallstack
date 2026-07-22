@@ -1,0 +1,52 @@
+{
+  "profile": "river3_plus_eb300",
+  "model": "RIVER 3 Plus",
+  "extra_battery": "EB300",
+  "transitions": [
+    {
+      "step": 0,
+      "grid": true,
+      "battery": "charging",
+      "soc": 86,
+      "input_w": 280,
+      "output_w": 150,
+      "extra_battery_present": true
+    },
+    {
+      "step": 1,
+      "grid": true,
+      "battery": "idle",
+      "soc": 87,
+      "input_w": 60,
+      "output_w": 165,
+      "extra_battery_present": true
+    },
+    {
+      "step": 2,
+      "grid": false,
+      "battery": "discharging",
+      "soc": 84,
+      "input_w": 0,
+      "output_w": 230,
+      "extra_battery_present": true
+    },
+    {
+      "step": 3,
+      "grid": false,
+      "battery": "discharging",
+      "soc": 78,
+      "input_w": 0,
+      "output_w": 265,
+      "extra_battery_present": true
+    },
+    {
+      "step": 4,
+      "grid": true,
+      "battery": "charging",
+      "soc": 80,
+      "input_w": 320,
+      "output_w": 190,
+      "extra_battery_present": true
+    }
+  ]
+}

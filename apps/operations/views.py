@@ -5,11 +5,13 @@ from dataclasses import dataclass
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 
+from apps.smallstack.api import api_error, api_view
 from apps.smallstack.crud import Action, CRUDView
 from apps.smallstack.mixins import StaffRequiredMixin
 
 from .forms import PowerStationForm, ShutdownTargetForm
 from .models import PowerStation, ShutdownTarget
+from .services.ecoflow_simulator import EcoFlowSimulator, SimulationProfileError
 
 
 @dataclass(frozen=True)
@@ -213,3 +215,51 @@ def page_view(request: HttpRequest, slug: str) -> HttpResponse:
 def blackout_buddy_view(request: HttpRequest) -> HttpResponse:
     context = _base_context(request, "blackout-buddy")
     return render(request, "operations/blackout_buddy.html", context)
+
+
+@api_view(methods=["GET"], require_auth=True, require_staff=True)
+def api_simulated_ecoflow_state(request: HttpRequest):
+    simulator = EcoFlowSimulator()
+    profile = request.GET.get("profile", "river3_plus_eb300")
+
+    try:
+        step = int(request.GET.get("step", 0))
+        count = int(request.GET.get("count", 1))
+    except ValueError:
+        return api_error("step and count must be integers", 400)
+
+    if count < 1 or count > 50:
+        return api_error("count must be between 1 and 50", 400)
+
+    try:
+        if count == 1:
+            snapshot = simulator.get_snapshot(profile=profile, step=step)
+            return {
+                "ok": True,
+                "profile": snapshot.profile,
+                "model": snapshot.model,
+                "extra_battery": snapshot.extra_battery,
+                "step": snapshot.step,
+                "state": snapshot.state,
+                "available_profiles": simulator.available_profiles(),
+            }
+
+        timeline = simulator.build_timeline(profile=profile, start_step=step, count=count)
+        return {
+            "ok": True,
+            "profile": profile,
+            "count": count,
+            "start_step": step,
+            "available_profiles": simulator.available_profiles(),
+            "transitions": [
+                {
+                    "step": entry.step,
+                    "model": entry.model,
+                    "extra_battery": entry.extra_battery,
+                    "state": entry.state,
+                }
+                for entry in timeline
+            ],
+        }
+    except SimulationProfileError as exc:
+        return api_error(str(exc), 400)

@@ -9,6 +9,7 @@ urlpatterns = [
     path("", views.dashboard_view, name="dashboard"),
     *PowerStationCRUDView.get_urls(),
     *ShutdownTargetCRUDView.get_urls(),
+    path("api/operations/simulated-ecoflow/state/", views.api_simulated_ecoflow_state, name="api_simulated_ecoflow_state"),
     path("events/", views.page_view, {"slug": "events"}, name="events"),
     path("reports/", views.page_view, {"slug": "reports"}, name="reports"),
     path("notifications/", views.page_view, {"slug": "notifications"}, name="notifications"),
