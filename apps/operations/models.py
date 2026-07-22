@@ -78,6 +78,8 @@ class PowerStation(models.Model):
         return self.nameplate_wh + self.extra_battery_wh
 
     def total_target_draw_watts(self) -> int:
+        if self.pk is None:
+            return 0
         agg = self.shutdown_targets.aggregate(total=Sum("power_draw_watts"))
         return int(agg["total"] or 0)
 
